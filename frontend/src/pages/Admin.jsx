@@ -2,7 +2,7 @@ import { useState } from 'react'
 import AppShell from '../components/AppShell.jsx'
 import Icon from '../components/Icon.jsx'
 import { AUDIENCES } from '../data/messages.js'
-import { useAdminBooks, useAdminBibleBooks, useBenchmarks, useSoulTargets } from '../api/admin.js'
+import { useAdminBooks, useAdminBibleBooks, useBenchmarks, useSoulTargets, usePrayerTargets } from '../api/admin.js'
 import { useAllBooks } from '../api/books.js'
 import { useBibleBooks } from '../api/bibleStudy.js'
 import { useMessages } from '../api/messages.js'
@@ -27,6 +27,7 @@ export default function Admin() {
   const { books: customBible, addBook: addBibleBook, removeBook: removeBibleBook } = useAdminBibleBooks()
   const { benchmarks, setBenchmark } = useBenchmarks()
   const { targets, setTarget } = useSoulTargets()
+  const { targets: prayerTargets, setTarget: setPrayerTarget } = usePrayerTargets()
 
   const [bookForm, setBookForm] = useState({ title: '', author: '', audiences: ['general'], chapters: 3, pagesPerChapter: 4 })
   const [bibleForm, setBibleForm] = useState({ name: '', chapters: 1 })
@@ -138,6 +139,27 @@ export default function Admin() {
                   />
                 </div>
                 <span className="bench-hint">souls required</span>
+              </div>
+            ))}
+          </div>
+        </Section>
+
+        <Section title="Daily prayer targets" sub="Minutes of prayer required per day for each event (e.g. 60 = 1hr members, 90 = 1hr 30mins leaders). Yearly benchmark = daily × 365.">
+          <div className="bench-grid">
+            {AUDIENCES.map((a) => (
+              <div key={a.key} className="bench-card">
+                <div className="bench-top">
+                  <span className="bench-label">{a.label}</span>
+                  <input
+                    className="bench-input"
+                    type="number"
+                    min="0"
+                    value={prayerTargets[a.key] || 0}
+                    onChange={(e) => setPrayerTarget(a.key, e.target.value)}
+                    aria-label={`${a.label} daily prayer minutes`}
+                  />
+                </div>
+                <span className="bench-hint">minutes per day</span>
               </div>
             ))}
           </div>

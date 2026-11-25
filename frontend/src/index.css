@@ -378,3 +378,11 @@ h1 { margin: 6px 0 0; font-size: clamp(28px, 3.4vw, 40px); line-height: 1.12; le
 .book-tag.soul-tag-none { background: var(--soft); color: var(--muted); }
 [data-theme='dark'] .book-tag.soul-tag-standing { background: #16301f; color: #6fd598; }
 [data-theme='dark'] .book-tag.soul-tag-conference { background: #2a1f47; color: #b79cf0; }
+
+/* Prayer & fasting */
+.prayer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; margin-bottom: 22px; }
+.prayer-timer-card { text-align: center; }
+.timer-display { font-size: 56px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: 2px; margin: 14px 0 18px; color: var(--accent); }
+.timer-controls { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.timer-controls .btn:disabled { opacity: .45; cursor: not-allowed; }
+.prayer-timer-card .tag-picker { margin-top: 22px; }

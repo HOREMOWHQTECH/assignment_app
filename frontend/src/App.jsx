@@ -8,6 +8,7 @@ import BookReader from './pages/BookReader.jsx'
 import Messages from './pages/Messages.jsx'
 import Admin from './pages/Admin.jsx'
 import SoulWinning from './pages/SoulWinning.jsx'
+import PrayerFasting from './pages/PrayerFasting.jsx'
 
 function Placeholder({ title }) {
   return (
@@ -31,7 +32,7 @@ export default function App() {
       <Route path="/books/:bookId" element={<BookReader />} />
       <Route path="/messages" element={<Messages />} />
       <Route path="/soul-winning" element={<SoulWinning />} />
-      <Route path="/prayer-fasting" element={<Placeholder title="Prayer & Fasting" />} />
+      <Route path="/prayer-fasting" element={<PrayerFasting />} />
       <Route path="/reports" element={<Placeholder title="Official Report" />} />
       <Route path="/admin" element={<Admin />} />
       <Route path="/settings" element={<Placeholder title="Settings" />} />
