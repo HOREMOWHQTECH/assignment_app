@@ -43,16 +43,16 @@ function coverDataUri(title, author, hue) {
 }
 
 const RAW = [
-  { id: 'b1', title: 'Foundations of Holiness', author: 'Bishop T. Adeyemi', hue: 160, chapters: makeChapters(4, 4, 0) },
-  { id: 'b2', title: 'The Disciplined Life', author: 'Rev. C. Okafor', hue: 210, chapters: makeChapters(3, 4, 4) },
-  { id: 'b3', title: 'Prayers That Move Mountains', author: 'Elder S. Bello', hue: 45, chapters: makeChapters(4, 4, 8) },
-  { id: 'b4', title: 'Walking in Purpose', author: 'Dr. A. Nwosu', hue: 280, chapters: makeChapters(3, 4, 2) },
-  { id: 'b5', title: 'The Armor of God', author: 'Pastor F. Eze', hue: 0, chapters: makeChapters(5, 4, 6) },
-  { id: 'b6', title: 'Renewing the Mind', author: 'Sister M. Obi', hue: 190, chapters: makeChapters(3, 4, 10) },
-  { id: 'b7', title: 'Faith Over Fear', author: 'Deacon K. Musa', hue: 120, chapters: makeChapters(4, 4, 1) },
-  { id: 'b8', title: 'The Table of Fellowship', author: 'Rev. J. Adekunle', hue: 30, chapters: makeChapters(3, 4, 5) },
-  { id: 'b9', title: 'Roots of Revival', author: 'Bishop P. Osei', hue: 340, chapters: makeChapters(4, 4, 9) },
-  { id: 'b10', title: 'Grace for the Journey', author: 'Pastor L. Chukwu', hue: 260, chapters: makeChapters(3, 4, 3) },
+  { id: 'b1', title: 'Foundations of Holiness', author: 'Bishop T. Adeyemi', hue: 160, audiences: ['general'], chapters: makeChapters(4, 4, 0) },
+  { id: 'b2', title: 'The Disciplined Life', author: 'Rev. C. Okafor', hue: 210, audiences: ['general'], chapters: makeChapters(3, 4, 4) },
+  { id: 'b3', title: 'Prayers That Move Mountains', author: 'Elder S. Bello', hue: 45, audiences: ['general'], chapters: makeChapters(4, 4, 8) },
+  { id: 'b4', title: 'Walking in Purpose', author: 'Dr. A. Nwosu', hue: 280, audiences: ['ministries'], chapters: makeChapters(3, 4, 2) },
+  { id: 'b5', title: 'The Armor of God', author: 'Pastor F. Eze', hue: 0, audiences: ['youth'], chapters: makeChapters(5, 4, 6) },
+  { id: 'b6', title: 'Renewing the Mind', author: 'Sister M. Obi', hue: 190, audiences: ['women'], chapters: makeChapters(3, 4, 10) },
+  { id: 'b7', title: 'Faith Over Fear', author: 'Deacon K. Musa', hue: 120, audiences: ['general'], chapters: makeChapters(4, 4, 1) },
+  { id: 'b8', title: 'The Table of Fellowship', author: 'Rev. J. Adekunle', hue: 30, audiences: ['general', 'women'], chapters: makeChapters(3, 4, 5) },
+  { id: 'b9', title: 'Roots of Revival', author: 'Bishop P. Osei', hue: 340, audiences: ['ministries'], chapters: makeChapters(4, 4, 9) },
+  { id: 'b10', title: 'Grace for the Journey', author: 'Pastor L. Chukwu', hue: 260, audiences: ['youth', 'general'], chapters: makeChapters(3, 4, 3) },
 ]
 
 export const BOOKS = RAW.map((b) => ({

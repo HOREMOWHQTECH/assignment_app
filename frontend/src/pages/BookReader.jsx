@@ -3,35 +3,53 @@ import { Link, useParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import AppShell from '../components/AppShell.jsx'
 import Icon from '../components/Icon.jsx'
-import { BOOKS } from '../data/books.js'
-import { useBookProgress } from '../api/books.js'
+import { getBook } from '../data/books.js'
+import { useBookProgress, useHighlights } from '../api/books.js'
+
+function renderHighlighted(text, quotes) {
+  if (!quotes.length) return text
+  const parts = []
+  let rest = text
+  let key = 0
+  const sorted = [...quotes].sort((a, b) => b.length - a.length)
+  for (const q of sorted) {
+    const idx = rest.indexOf(q)
+    if (idx === -1) continue
+    if (idx > 0) parts.push(rest.slice(0, idx))
+    parts.push(<mark key={key++}>{q}</mark>)
+    rest = rest.slice(idx + q.length)
+  }
+  if (rest) parts.push(rest)
+  return parts.length ? parts : text
+}
 
 export default function BookReader() {
   const { bookId } = useParams()
-  const book = BOOKS.find((b) => b.id === bookId)
-  const { progress, setPage } = useBookProgress()
-  const saved = progress[bookId] || { page: 0, completed: false }
+  const book = getBook(bookId)
+  const { progress, update, markCompleted } = useBookProgress()
+  const { highlights, add } = useHighlights(bookId)
+  const saved = progress[bookId] || { chapter: 0, page: 0, completed: false }
 
+  const [chapter, setChapter] = useState(Math.min(saved.chapter, (book?.chapters.length || 1) - 1))
   const [page, setPageState] = useState(saved.page)
   const [dir, setDir] = useState(1)
   const [flipping, setFlipping] = useState(false)
   const [speaking, setSpeaking] = useState(false)
-  const utterRef = useRef(null)
+  const [sel, setSel] = useState(null)
+  const pageRef = useRef(null)
 
-  const total = book ? book.pages.length : 0
-  const text = book ? book.pages[page] : ''
+  const ch = book?.chapters[chapter]
+  const totalPages = ch?.pages.length || 0
+  const text = ch?.pages[page] || ''
+  const pageQuotes = highlights.filter((h) => h.chapter === chapter && h.page === page).map((h) => h.quote)
 
-  useEffect(() => {
-    return () => {
-      window.speechSynthesis?.cancel()
-    }
-  }, [])
+  useEffect(() => () => window.speechSynthesis?.cancel(), [])
 
   useEffect(() => {
     if (!book) return
-    setPage(bookId, page)
+    update(bookId, { chapter, page })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, bookId])
+  }, [chapter, page, bookId])
 
   const stopSpeech = () => {
     window.speechSynthesis?.cancel()
@@ -40,32 +58,56 @@ export default function BookReader() {
 
   const toggleAudio = () => {
     if (!('speechSynthesis' in window)) return
-    if (speaking) {
-      stopSpeech()
-      return
-    }
+    if (speaking) return stopSpeech()
     const utter = new SpeechSynthesisUtterance(text)
-    utter.rate = 1
     utter.onend = () => setSpeaking(false)
     utter.onerror = () => setSpeaking(false)
-    utterRef.current = utter
     window.speechSynthesis.cancel()
     window.speechSynthesis.speak(utter)
     setSpeaking(true)
   }
 
-  const go = (next) => {
-    if (flipping || next < 0 || next >= total) return
+  const go = (d) => {
+    if (flipping) return
     stopSpeech()
-    setDir(next > page ? 1 : -1)
-    setFlipping(true)
-    setTimeout(() => {
-      setPageState(next)
-      setFlipping(false)
-    }, 450)
+    setSel(null)
+    const nextPage = page + d
+    if (nextPage >= 0 && nextPage < totalPages) {
+      setDir(d)
+      setFlipping(true)
+      setTimeout(() => { setPageState(nextPage); setFlipping(false) }, 450)
+    } else if (d > 0 && chapter < book.chapters.length - 1) {
+      setDir(1)
+      setFlipping(true)
+      setTimeout(() => { setChapter((c) => c + 1); setPageState(0); setFlipping(false) }, 450)
+    } else if (d < 0 && chapter > 0) {
+      setDir(-1)
+      setFlipping(true)
+      setTimeout(() => {
+        setChapter((c) => c - 1)
+        setPageState(book.chapters[chapter - 1].pages.length - 1)
+        setFlipping(false)
+      }, 450)
+    }
   }
 
-  const words = useMemo(() => text.split(' '), [text])
+  const onMouseUp = () => {
+    const s = window.getSelection()
+    const quote = s?.toString().trim()
+    if (quote && quote.length > 3 && pageRef.current?.contains(s.anchorNode)) {
+      const rect = s.getRangeAt(0).getBoundingClientRect()
+      setSel({ quote, x: rect.left + rect.width / 2, y: rect.top })
+    } else {
+      setSel(null)
+    }
+  }
+
+  const saveHighlight = () => {
+    if (!sel) return
+    add({ chapter, page, quote: sel.quote })
+    setSel(null)
+    window.getSelection()?.removeAllRanges()
+  }
 
   if (!book) {
     return (
@@ -78,38 +120,43 @@ export default function BookReader() {
     )
   }
 
-  const pct = Math.round(((page + 1) / total) * 100)
+  const isLast = chapter === book.chapters.length - 1 && page === totalPages - 1
+  const pct = Math.round(((chapter + (page + 1) / totalPages) / book.chapters.length) * 100)
 
   return (
     <AppShell>
-      <main className="reader">
+      <main className="reader" onMouseUp={onMouseUp}>
         <div className="reader-top">
           <Link className="btn ghost sm" to="/books"><Icon name="arrow" style={{ transform: 'rotate(180deg)' }} /> Library</Link>
           <div className="reader-title">
             <strong>{book.title}</strong>
-            <span>{book.author}</span>
+            <span>{book.author} · {ch?.title}</span>
           </div>
           <div className="reader-progress">
-            <span>Page {page + 1} of {total}</span>
+            <span>{ch?.title}, page {page + 1} of {totalPages} · {pct}%</span>
             <div className="book-bar"><i style={{ width: `${pct}%` }} /></div>
           </div>
         </div>
 
+        <div className="chapter-pills">
+          {book.chapters.map((c, i) => (
+            <button
+              key={i}
+              type="button"
+              className={`chapter-pill${i === chapter ? ' on' : ''}${i < chapter ? ' done' : ''}`}
+              onClick={() => { stopSpeech(); setChapter(i); setPageState(0) }}
+            >
+              {i < chapter ? <Icon name="check" /> : null} Ch. {i + 1}
+            </button>
+          ))}
+        </div>
+
         <div className="book-stage">
-          <div className={`book-page${flipping ? ' flipping' : ''}`} data-dir={dir}>
+          <div className="book-page" ref={pageRef}>
             <div className="page-face page-front">
-              <p className="page-chapter">Page {page + 1}</p>
+              <p className="page-chapter">{ch?.title} — Page {page + 1}</p>
               <p className="page-text">
-                {words.map((w, i) => (
-                  <motion.span
-                    key={`${page}-${i}`}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.15 + i * 0.012, duration: 0.2 }}
-                  >
-                    {w}{' '}
-                  </motion.span>
-                ))}
+                {renderHighlighted(text, pageQuotes)}
               </p>
             </div>
             <AnimatePresence>
@@ -122,14 +169,12 @@ export default function BookReader() {
                   transition={{ duration: 0.45, ease: 'easeInOut' }}
                 >
                   <div className="page-face page-flip-front">
-                    <p className="page-chapter">Page {page + 1}</p>
+                    <p className="page-chapter">{ch?.title} — Page {page + 1}</p>
                     <p className="page-text">{text}</p>
                   </div>
                   <div className="page-face page-flip-back">
-                    <p className="page-chapter">Page {page + (dir === 1 ? 2 : 0)}</p>
-                    <p className="page-text">
-                      {book.pages[Math.min(Math.max(page + (dir === 1 ? 1 : -1), 0), total - 1)]}
-                    </p>
+                    <p className="page-chapter">Next page</p>
+                    <p className="page-text" style={{ color: 'var(--muted)' }}>…</p>
                   </div>
                 </motion.div>
               )}
@@ -137,8 +182,21 @@ export default function BookReader() {
           </div>
         </div>
 
+        {sel && (
+          <motion.button
+            className="highlight-btn"
+            type="button"
+            style={{ left: sel.x, top: sel.y - 46 }}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            onClick={saveHighlight}
+          >
+            <Icon name="star" /> Highlight
+          </motion.button>
+        )}
+
         <div className="reader-controls">
-          <button className="btn ghost" type="button" onClick={() => go(page - 1)} disabled={page === 0 || flipping}>
+          <button className="btn ghost" type="button" onClick={() => go(-1)} disabled={(chapter === 0 && page === 0) || flipping}>
             <Icon name="chevL" /> Previous
           </button>
           <button
@@ -150,17 +208,18 @@ export default function BookReader() {
           >
             <Icon name={speaking ? 'stop' : 'play'} /> {speaking ? 'Stop audio' : 'Read aloud'}
           </button>
-          <button className="btn ghost" type="button" onClick={() => go(page + 1)} disabled={page === total - 1 || flipping}>
+          <button className="btn ghost" type="button" onClick={() => go(1)} disabled={isLast || flipping}>
             Next <Icon name="chevR" />
           </button>
+          {!saved.completed && (
+            <button className="btn pri" type="button" onClick={() => markCompleted(bookId, true)}>
+              <Icon name="check" /> Mark completed
+            </button>
+          )}
         </div>
 
-        {page === total - 1 && (
-          <motion.p
-            className="reader-done"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
+        {isLast && (
+          <motion.p className="reader-done" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
             <Icon name="star" /> You finished “{book.title}” — well done!
           </motion.p>
         )}
