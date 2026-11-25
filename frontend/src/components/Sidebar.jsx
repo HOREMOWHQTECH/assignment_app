@@ -12,7 +12,7 @@ const LINKS = [
   { to: '/reports', icon: 'file', label: 'Official Report' },
 ]
 
-export default function Sidebar() {
+export default function Sidebar({ collapsed, onToggle }) {
   return (
     <motion.aside
       className="side"
@@ -23,12 +23,21 @@ export default function Sidebar() {
       <div className="brand">
         <div className="logo" role="img" aria-label="HOREMOW logo" />
         <span>HOREMOW</span>
+        <button
+          className="side-toggle"
+          type="button"
+          onClick={onToggle}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-expanded={!collapsed}
+        >
+          <Icon name={collapsed ? 'chevR' : 'chevL'} />
+        </button>
       </div>
       <nav aria-label="Main">
         {LINKS.map((link) => (
-          <NavLink key={link.to} to={link.to} end={link.end}>
+          <NavLink key={link.to} to={link.to} end={link.end} title={link.label}>
             <Icon name={link.icon} />
-            {link.label}
+            <span className="nav-label">{link.label}</span>
           </NavLink>
         ))}
       </nav>
@@ -39,7 +48,7 @@ export default function Sidebar() {
         whileTap={{ scale: 0.97 }}
       >
         <Icon name="mic" />
-        Voice AI Assistant
+        <span>Voice AI Assistant</span>
       </motion.button>
     </motion.aside>
   )

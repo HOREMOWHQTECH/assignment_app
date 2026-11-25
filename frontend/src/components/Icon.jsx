@@ -93,6 +93,8 @@ const PATHS = {
       <path d="M3 10h18" />
     </>
   ),
+  chevL: <path d="m15 18-6-6 6-6" />,
+  chevR: <path d="m9 18 6-6-6-6" />,
 }
 
 export default function Icon({ name, className = 'i' }) {
