@@ -408,6 +408,19 @@ h1 { margin: 6px 0 0; font-size: clamp(28px, 3.4vw, 40px); line-height: 1.12; le
 .report-row-val { font-weight: 800; color: var(--text); white-space: nowrap; }
 .report-foot { margin: 20px 0 0; text-align: center; font-size: 12px; color: var(--muted); }
 
+/* Voice assistant */
+.voice-panel { position: fixed; right: 20px; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); width: min(360px, calc(100vw - 40px)); background: var(--surface); border: 1px solid var(--line); border-radius: 20px; box-shadow: 0 20px 60px rgba(0, 0, 0, .22); z-index: 60; overflow: hidden; }
+.voice-panel-head { display: flex; align-items: center; gap: 10px; padding: 14px 16px; background: var(--accent); color: var(--on-accent); }
+.voice-panel-head .i { width: 18px; height: 18px; }
+.voice-panel-head strong { flex: 1; font-size: 14px; }
+.voice-panel-head .icon-btn { background: rgba(255,255,255,.15); border-color: transparent; color: inherit; width: 32px; height: 32px; }
+.voice-panel-body { padding: 18px 16px; display: flex; flex-direction: column; gap: 10px; min-height: 110px; }
+.voice-you { margin: 0; font-size: 13px; font-weight: 700; color: var(--accent); }
+.voice-reply { margin: 0; font-size: 14px; line-height: 1.55; color: var(--text); }
+.voice-panel-foot { padding: 0 16px 16px; }
+.voice-panel-foot .btn { width: 100%; justify-content: center; }
+@media (max-width: 640px) { .voice-panel { right: 12px; left: 12px; width: auto; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); } }
+
 /* Mobile responsiveness */
 @media (max-width: 640px) {
   main { padding: 16px 14px calc(32px + env(safe-area-inset-bottom, 0px)) 96px; }

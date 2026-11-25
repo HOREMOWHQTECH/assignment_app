@@ -1,18 +1,21 @@
 import { NavLink } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Icon from './Icon.jsx'
+import { useAppSettings } from '../api/settings.js'
 
 const LINKS = [
   { to: '/', icon: 'grid', label: 'Dashboard', end: true },
-  { to: '/bible-study', icon: 'book', label: 'Bible Study' },
-  { to: '/books', icon: 'lib', label: 'HOREMOW Books' },
-  { to: '/messages', icon: 'phones', label: 'Messages' },
-  { to: '/soul-winning', icon: 'users', label: 'Soul Winning' },
-  { to: '/prayer-fasting', icon: 'clock', label: 'Prayer & Fasting' },
-  { to: '/reports', icon: 'file', label: 'Official Report' },
+  { to: '/bible-study', icon: 'book', label: 'Bible Study', module: 'bibleStudy' },
+  { to: '/books', icon: 'lib', label: 'HOREMOW Books', module: 'books' },
+  { to: '/messages', icon: 'phones', label: 'Messages', module: 'messages' },
+  { to: '/soul-winning', icon: 'users', label: 'Soul Winning', module: 'soulWinning' },
+  { to: '/prayer-fasting', icon: 'clock', label: 'Prayer & Fasting', module: 'prayer' },
+  { to: '/reports', icon: 'file', label: 'Official Report', module: 'reports' },
 ]
 
 export default function Sidebar({ collapsed, onToggle }) {
+  const { settings } = useAppSettings()
+  const links = LINKS.filter((l) => !l.module || settings.modules[l.module])
   return (
     <motion.aside
       className="side"
@@ -34,7 +37,7 @@ export default function Sidebar({ collapsed, onToggle }) {
         </button>
       </div>
       <nav aria-label="Main">
-        {LINKS.map((link) => (
+        {links.map((link) => (
           <NavLink key={link.to} to={link.to} end={link.end} title={link.label}>
             <Icon name={link.icon} />
             <span className="nav-label">{link.label}</span>
@@ -44,6 +47,7 @@ export default function Sidebar({ collapsed, onToggle }) {
       <motion.button
         className="voice"
         type="button"
+        onClick={() => window.dispatchEvent(new CustomEvent('horemow:voice'))}
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.97 }}
       >

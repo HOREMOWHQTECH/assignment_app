@@ -29,7 +29,11 @@ function useStoredList(key) {
 // Admin-added library books
 export function useAdminBooks() {
   const { items, add, remove } = useStoredList(BOOKS_KEY)
-  const addBook = useCallback((data) => add(createBook(data)), [add])
+  const addBook = useCallback((data) => {
+    const book = createBook(data)
+    add(book)
+    return book
+  }, [add])
   return { books: items, addBook, removeBook: remove }
 }
 

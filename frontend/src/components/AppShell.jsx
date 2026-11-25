@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Sidebar from './Sidebar.jsx'
+import VoiceAssistant from './VoiceAssistant.jsx'
 
 export default function AppShell({ children }) {
   const [collapsed, setCollapsed] = useState(
@@ -10,6 +11,7 @@ export default function AppShell({ children }) {
     <div className={`app${collapsed ? ' collapsed' : ''}`}>
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} />
       {children}
+      <VoiceAssistant />
     </div>
   )
 }

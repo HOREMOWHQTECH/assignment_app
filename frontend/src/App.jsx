@@ -10,6 +10,7 @@ import Admin from './pages/Admin.jsx'
 import SoulWinning from './pages/SoulWinning.jsx'
 import PrayerFasting from './pages/PrayerFasting.jsx'
 import Reports from './pages/Reports.jsx'
+import Settings from './pages/Settings.jsx'
 
 function Placeholder({ title }) {
   return (
@@ -36,7 +37,7 @@ export default function App() {
       <Route path="/prayer-fasting" element={<PrayerFasting />} />
       <Route path="/reports" element={<Reports />} />
       <Route path="/admin" element={<Admin />} />
-      <Route path="/settings" element={<Placeholder title="Settings" />} />
+      <Route path="/settings" element={<Settings />} />
     </Routes>
   )
 }

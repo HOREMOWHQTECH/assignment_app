@@ -65,8 +65,9 @@ export function getBook(id) {
   return BOOKS.find((b) => b.id === id)
 }
 
-// Factory for admin-added books (chapters/pages/cover auto-generated).
-export function createBook({ title, author, audiences = ['general'], chapters = 3, pagesPerChapter = 4 }) {
+// Factory for admin-added books. Pass pdf: true for uploaded PDF titles
+// (chapters/pages are placeholders; the PDF itself is stored via api/pdfStore.js).
+export function createBook({ title, author, audiences = ['general'], chapters = 3, pagesPerChapter = 4, pdf = false }) {
   const hue = Math.floor(Math.random() * 360)
   const seed = Math.floor(Math.random() * 10)
   const chs = makeChapters(chapters, pagesPerChapter, seed)
@@ -80,5 +81,6 @@ export function createBook({ title, author, audiences = ['general'], chapters = 
     cover: coverDataUri(title, author, hue),
     pageCount: chs.reduce((n, c) => n + c.pages.length, 0),
     custom: true,
+    pdf,
   }
 }

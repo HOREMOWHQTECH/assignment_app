@@ -1,13 +1,24 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import AppShell from '../components/AppShell.jsx'
 import Icon from '../components/Icon.jsx'
 import { AUDIENCES } from '../data/messages.js'
 import { useAdminBooks, useAdminBibleBooks, useBenchmarks, useSoulTargets, usePrayerTargets } from '../api/admin.js'
+import { useAppSettings } from '../api/settings.js'
 import { useAllBooks } from '../api/books.js'
 import { useBibleBooks } from '../api/bibleStudy.js'
 import { useMessages } from '../api/messages.js'
+import { savePdf, deletePdf } from '../api/pdfStore.js'
 
 const AUDIENCE_LABEL = Object.fromEntries(AUDIENCES.map((a) => [a.key, a.label]))
+
+const MODULES = [
+  { key: 'bibleStudy', label: 'Bible Study' },
+  { key: 'books', label: 'HOREMOW Books' },
+  { key: 'messages', label: 'Messages' },
+  { key: 'soulWinning', label: 'Soul Winning' },
+  { key: 'prayer', label: 'Prayer & Fasting' },
+  { key: 'reports', label: 'Official Report' },
+]
 
 function Section({ title, sub, children }) {
   return (
@@ -28,10 +39,12 @@ export default function Admin() {
   const { benchmarks, setBenchmark } = useBenchmarks()
   const { targets, setTarget } = useSoulTargets()
   const { targets: prayerTargets, setTarget: setPrayerTarget } = usePrayerTargets()
+  const { settings, setModule } = useAppSettings()
 
-  const [bookForm, setBookForm] = useState({ title: '', author: '', audiences: ['general'], chapters: 3, pagesPerChapter: 4 })
+  const [bookForm, setBookForm] = useState({ title: '', author: '', audiences: ['general'], pdf: null })
   const [bibleForm, setBibleForm] = useState({ name: '', chapters: 1 })
   const [msg, setMsg] = useState('')
+  const pdfInputRef = useRef(null)
 
   const toggleAudience = (key) => {
     setBookForm((f) => ({
@@ -40,17 +53,18 @@ export default function Admin() {
     }))
   }
 
-  const submitBook = (e) => {
+  const submitBook = async (e) => {
     e.preventDefault()
-    if (!bookForm.title.trim() || !bookForm.author.trim() || !bookForm.audiences.length) return
-    addBook({
+    if (!bookForm.title.trim() || !bookForm.author.trim() || !bookForm.audiences.length || !bookForm.pdf) return
+    const book = addBook({
       title: bookForm.title.trim(),
       author: bookForm.author.trim(),
       audiences: bookForm.audiences,
-      chapters: bookForm.chapters,
-      pagesPerChapter: bookForm.pagesPerChapter,
+      pdf: true,
     })
-    setBookForm({ title: '', author: '', audiences: ['general'], chapters: 3, pagesPerChapter: 4 })
+    await savePdf(book.id, bookForm.pdf)
+    setBookForm({ title: '', author: '', audiences: ['general'], pdf: null })
+    if (pdfInputRef.current) pdfInputRef.current.value = ''
     setMsg('Book added — it now appears in the library.')
   }
 
@@ -79,13 +93,37 @@ export default function Admin() {
 
         {msg && <p className="form-error" style={{ color: 'var(--accent)' }}>{msg}</p>}
 
-        <Section title="Add a book" sub="Creates a new title in the HOREMOW library with auto-generated chapters and cover.">
+        <Section title="App modules" sub="Enable or disable entire sections of the app. Disabled modules are hidden from the sidebar.">
+          <div className="admin-list">
+            {MODULES.map((m) => (
+              <div key={m.key} className="admin-row">
+                <span>{m.label}</span>
+                <button
+                  type="button"
+                  className={`book-tag pick ${settings.modules[m.key] ? 'on' : ''}`}
+                  style={{ cursor: 'pointer', opacity: settings.modules[m.key] ? 1 : 0.55 }}
+                  onClick={() => setModule(m.key, !settings.modules[m.key])}
+                >
+                  {settings.modules[m.key] ? 'Enabled' : 'Disabled'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </Section>
+
+        <Section title="Add a book (PDF)" sub="Upload a PDF title — it appears in the library and opens in the built-in PDF reader.">
           <form className="msg-form" onSubmit={submitBook}>
             <input type="text" placeholder="Book title" value={bookForm.title} onChange={(e) => setBookForm((f) => ({ ...f, title: e.target.value }))} />
             <input type="text" placeholder="Author" value={bookForm.author} onChange={(e) => setBookForm((f) => ({ ...f, author: e.target.value }))} />
-            <input type="number" min="1" max="20" placeholder="Chapters" value={bookForm.chapters} onChange={(e) => setBookForm((f) => ({ ...f, chapters: e.target.value }))} style={{ maxWidth: 110 }} />
-            <input type="number" min="1" max="10" placeholder="Pages/ch" value={bookForm.pagesPerChapter} onChange={(e) => setBookForm((f) => ({ ...f, pagesPerChapter: e.target.value }))} style={{ maxWidth: 110 }} />
-            <button className="btn pri" type="submit"><Icon name="plus" /> Add book</button>
+            <input
+              ref={pdfInputRef}
+              type="file"
+              accept="application/pdf,.pdf"
+              required
+              onChange={(e) => setBookForm((f) => ({ ...f, pdf: e.target.files?.[0] || null }))}
+              style={{ fontSize: 13 }}
+            />
+            <button className="btn pri" type="submit" disabled={!bookForm.pdf}><Icon name="plus" /> Add book</button>
           </form>
           <div className="tag-picker">
             <span className="tag-picker-label">Audiences:</span>
@@ -98,7 +136,7 @@ export default function Admin() {
               {customBooks.map((b) => (
                 <div key={b.id} className="admin-row">
                   <span><strong>{b.title}</strong> — {b.author} ({b.audiences.map((a) => AUDIENCE_LABEL[a]).join(', ')})</span>
-                  <button className="btn ghost sm" type="button" onClick={() => removeBook(b.id)}><Icon name="trash" /></button>
+                  <button className="btn ghost sm" type="button" onClick={() => { removeBook(b.id); deletePdf(b.id) }}><Icon name="trash" /></button>
                 </div>
               ))}
             </div>

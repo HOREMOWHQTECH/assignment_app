@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import AppShell from '../components/AppShell.jsx'
 import Icon from '../components/Icon.jsx'
 import { useAllBooks, useBookProgress, useHighlights } from '../api/books.js'
+import { getPdf } from '../api/pdfStore.js'
 
 function renderHighlighted(text, quotes) {
   if (!quotes.length) return text
@@ -36,6 +37,7 @@ export default function BookReader() {
   const [flipping, setFlipping] = useState(false)
   const [speaking, setSpeaking] = useState(false)
   const [sel, setSel] = useState(null)
+  const [pdfUrl, setPdfUrl] = useState(null)
   const pageRef = useRef(null)
 
   const ch = book?.chapters[chapter]
@@ -44,6 +46,19 @@ export default function BookReader() {
   const pageQuotes = highlights.filter((h) => h.chapter === chapter && h.page === page).map((h) => h.quote)
 
   useEffect(() => () => window.speechSynthesis?.cancel(), [])
+
+  useEffect(() => {
+    if (!book?.pdf) return undefined
+    let url = null
+    getPdf(bookId).then((blob) => {
+      if (blob) {
+        url = URL.createObjectURL(blob)
+        setPdfUrl(url)
+      }
+    })
+    return () => { if (url) URL.revokeObjectURL(url) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [book?.pdf, bookId])
 
   useEffect(() => {
     if (!book) return
@@ -115,6 +130,37 @@ export default function BookReader() {
         <main style={{ padding: 40 }}>
           <h1>Book not found</h1>
           <Link className="btn pri" to="/books">Back to books</Link>
+        </main>
+      </AppShell>
+    )
+  }
+
+  if (book.pdf) {
+    return (
+      <AppShell>
+        <main className="reader">
+          <div className="reader-top">
+            <Link className="btn ghost sm" to="/books"><Icon name="arrow" style={{ transform: 'rotate(180deg)' }} /> Library</Link>
+            <div className="reader-title">
+              <strong>{book.title}</strong>
+              <span>{book.author} · PDF document</span>
+            </div>
+            {!saved.completed && (
+              <button className="btn pri" type="button" onClick={() => markCompleted(bookId, true)}>
+                <Icon name="check" /> Mark completed
+              </button>
+            )}
+          </div>
+          <div className="book-page" style={{ minHeight: '70vh', padding: 0 }}>
+            {pdfUrl ? (
+              <iframe src={pdfUrl} title={book.title} style={{ width: '100%', height: '70vh', border: 0, borderRadius: 18, background: 'var(--soft)' }} />
+            ) : (
+              <p style={{ padding: 32, color: 'var(--muted)', textAlign: 'center' }}>Loading PDF…</p>
+            )}
+          </div>
+          {saved.completed && (
+            <p className="reader-done"><Icon name="star" /> You finished “{book.title}” — well done!</p>
+          )}
         </main>
       </AppShell>
     )

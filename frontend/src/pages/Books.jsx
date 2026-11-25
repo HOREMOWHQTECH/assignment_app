@@ -76,7 +76,7 @@ export default function Books() {
             const pagesCovered = p.completed
               ? book.pageCount
               : book.chapters.slice(0, p.chapter).reduce((n, c) => n + c.pages.length, 0) + p.page + 1
-            const pct = Math.round((pagesCovered / book.pageCount) * 100)
+            const pct = book.pdf ? (p.completed ? 100 : 0) : Math.round((pagesCovered / book.pageCount) * 100)
             return (
               <motion.div
                 key={book.id}
@@ -93,14 +93,14 @@ export default function Books() {
                   <div className="book-info-top">
                     <div>
                       <strong>{book.title}</strong>
-                      <span>{book.author} · {book.chapters.length} chapters · {book.pageCount} pages</span>
+                      <span>{book.author} · {book.pdf ? 'PDF document' : `${book.chapters.length} chapters · ${book.pageCount} pages`}</span>
                       <span className="book-tags">
                         {book.audiences.map((a) => (
                           <em key={a} className={`book-tag ${a}`}>{AUDIENCE_LABEL[a]}</em>
                         ))}
                       </span>
                     </div>
-                    <span className="book-pages">{pagesCovered}/{book.pageCount} pages</span>
+                    <span className="book-pages">{book.pdf ? (p.completed ? 'Completed' : 'PDF') : `${pagesCovered}/${book.pageCount} pages`}</span>
                   </div>
                   <div className="book-bar"><i style={{ width: `${pct}%` }} /></div>
                   <div className="book-actions">
