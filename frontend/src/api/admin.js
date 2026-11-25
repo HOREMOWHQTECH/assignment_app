@@ -6,6 +6,7 @@ import { BENCHMARKS } from '../data/messages.js'
 const BOOKS_KEY = 'horemow-admin-books'
 const BIBLE_KEY = 'horemow-admin-bible-books'
 const BENCH_KEY = 'horemow-benchmarks'
+const SOUL_KEY = 'horemow-soul-targets'
 
 function load(key, fallback) {
   try {
@@ -46,4 +47,14 @@ export function useBenchmarks() {
     setBenchmarks((p) => ({ ...p, [key]: Math.max(0, parseInt(value, 10) || 0) }))
   }, [])
   return { benchmarks, setBenchmark }
+}
+
+// Soul-winning targets per event (set by admin)
+export function useSoulTargets() {
+  const [targets, setTargets] = useState(() => ({ general: 50, women: 30, ministries: 20, youth: 60, ...load(SOUL_KEY, {}) }))
+  useEffect(() => window.localStorage.setItem(SOUL_KEY, JSON.stringify(targets)), [targets])
+  const setTarget = useCallback((key, value) => {
+    setTargets((p) => ({ ...p, [key]: Math.max(0, parseInt(value, 10) || 0) }))
+  }, [])
+  return { targets, setTarget }
 }

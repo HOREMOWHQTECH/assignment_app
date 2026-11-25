@@ -2,7 +2,7 @@ import { useState } from 'react'
 import AppShell from '../components/AppShell.jsx'
 import Icon from '../components/Icon.jsx'
 import { AUDIENCES } from '../data/messages.js'
-import { useAdminBooks, useAdminBibleBooks, useBenchmarks } from '../api/admin.js'
+import { useAdminBooks, useAdminBibleBooks, useBenchmarks, useSoulTargets } from '../api/admin.js'
 import { useAllBooks } from '../api/books.js'
 import { useBibleBooks } from '../api/bibleStudy.js'
 import { useMessages } from '../api/messages.js'
@@ -26,6 +26,7 @@ export default function Admin() {
   const { books: customBooks, addBook, removeBook } = useAdminBooks()
   const { books: customBible, addBook: addBibleBook, removeBook: removeBibleBook } = useAdminBibleBooks()
   const { benchmarks, setBenchmark } = useBenchmarks()
+  const { targets, setTarget } = useSoulTargets()
 
   const [bookForm, setBookForm] = useState({ title: '', author: '', audiences: ['general'], chapters: 3, pagesPerChapter: 4 })
   const [bibleForm, setBibleForm] = useState({ name: '', chapters: 1 })
@@ -119,6 +120,27 @@ export default function Admin() {
               ))}
             </div>
           )}
+        </Section>
+
+        <Section title="Soul-winning targets" sub="Set how many souls should be won per event.">
+          <div className="bench-grid">
+            {AUDIENCES.map((a) => (
+              <div key={a.key} className="bench-card">
+                <div className="bench-top">
+                  <span className="bench-label">{a.label}</span>
+                  <input
+                    className="bench-input"
+                    type="number"
+                    min="0"
+                    value={targets[a.key] || 0}
+                    onChange={(e) => setTarget(a.key, e.target.value)}
+                    aria-label={`${a.label} soul target`}
+                  />
+                </div>
+                <span className="bench-hint">souls required</span>
+              </div>
+            ))}
+          </div>
         </Section>
 
         <Section title="Message benchmarks" sub="Set how many messages users should log per event.">

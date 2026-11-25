@@ -21,35 +21,35 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --bg: #0a110e;
-    --surface: #111b16;
-    --soft: #16231d;
-    --line: #1e2d26;
-    --text: #eef5f0;
-    --muted: #8da295;
-    --accent: #34d399;
-    --accent-soft: #12291f;
-    --on-accent: #04231a;
+    --bg: #0b141a;
+    --surface: #111b21;
+    --soft: #202c33;
+    --line: #222d34;
+    --text: #e9edef;
+    --muted: #8696a0;
+    --accent: #00a884;
+    --accent-soft: #0f2e2a;
+    --on-accent: #111b21;
     --amber: #f5b94a;
-    --amber-soft: #2a2111;
-    --track: #1c2b24;
+    --amber-soft: #33270f;
+    --track: #222d34;
     color-scheme: dark;
   }
 }
 
 :root[data-theme='dark'] {
-  --bg: #0a110e;
-  --surface: #111b16;
-  --soft: #16231d;
-  --line: #1e2d26;
-  --text: #eef5f0;
-  --muted: #8da295;
-  --accent: #34d399;
-  --accent-soft: #12291f;
-  --on-accent: #04231a;
+  --bg: #0b141a;
+  --surface: #111b21;
+  --soft: #202c33;
+  --line: #222d34;
+  --text: #e9edef;
+  --muted: #8696a0;
+  --accent: #00a884;
+  --accent-soft: #0f2e2a;
+  --on-accent: #111b21;
   --amber: #f5b94a;
-  --amber-soft: #2a2111;
-  --track: #1c2b24;
+  --amber-soft: #33270f;
+  --track: #222d34;
   color-scheme: dark;
 }
 
@@ -366,3 +366,14 @@ h1 { margin: 6px 0 0; font-size: clamp(28px, 3.4vw, 40px); line-height: 1.12; le
 .admin-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; font-size: 13.5px; }
 .bench-input { width: 76px; height: 34px; padding: 0 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--text); font: 800 14px Manrope, system-ui, sans-serif; text-align: center; outline: none; }
 .bench-input:focus { border-color: var(--accent); }
+
+/* Soul winning */
+.soul-form select { height: 46px; padding: 0 16px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--text); font: 600 14px Manrope, system-ui, sans-serif; cursor: pointer; }
+.soul-note { width: 100%; margin-top: 10px; padding: 14px 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); color: var(--text); font: 500 14px Manrope, system-ui, sans-serif; resize: vertical; outline: none; }
+.soul-note:focus { border-color: var(--accent); }
+.soul-note-text { color: var(--muted); font-size: 12.5px; font-style: italic; }
+.book-tag.soul-tag-standing { background: #e8f7ee; color: #1d7a3d; border-color: transparent; }
+.book-tag.soul-tag-conference { background: #efe6ff; color: #6a3fc0; border-color: transparent; }
+.book-tag.soul-tag-none { background: var(--soft); color: var(--muted); }
+[data-theme='dark'] .book-tag.soul-tag-standing { background: #16301f; color: #6fd598; }
+[data-theme='dark'] .book-tag.soul-tag-conference { background: #2a1f47; color: #b79cf0; }
