@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom'
 import Dashboard from './pages/Dashboard.jsx'
 import Register from './pages/Register.jsx'
 import Login from './pages/Login.jsx'
+import BibleStudy from './pages/BibleStudy.jsx'
 
 function Placeholder({ title }) {
   return (
