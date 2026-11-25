@@ -386,3 +386,72 @@ h1 { margin: 6px 0 0; font-size: clamp(28px, 3.4vw, 40px); line-height: 1.12; le
 .timer-controls { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
 .timer-controls .btn:disabled { opacity: .45; cursor: not-allowed; }
 .prayer-timer-card .tag-picker { margin-top: 22px; }
+
+/* Progress report */
+.report-sheet { background: var(--surface); border: 1px solid var(--line); border-radius: 24px; padding: clamp(20px, 4vw, 36px); max-width: 760px; }
+.report-head { display: flex; align-items: center; gap: 16px; padding-bottom: 20px; border-bottom: 1px solid var(--line); }
+.report-head .logo { width: 52px; height: 52px; border-radius: 50%; background: var(--logo) center/cover; flex: none; }
+.report-head h2 { margin: 0; font-size: 20px; }
+.report-head span { color: var(--muted); font-size: 13px; font-weight: 600; }
+.report-overall { margin-left: auto; text-align: center; }
+.report-overall strong { display: block; font-size: 34px; font-weight: 800; color: var(--accent); line-height: 1; }
+.report-overall span { font-size: 12px; font-weight: 700; color: var(--muted); }
+.report-cat { padding: 18px 0; border-bottom: 1px solid var(--line); }
+.report-cat:last-of-type { border-bottom: 0; }
+.report-cat-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.report-cat-top strong { font-size: 15px; }
+.report-pct { font-weight: 800; font-size: 14px; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 3px 12px; }
+.report-cat .book-bar { margin-bottom: 8px; }
+.report-rows { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin-top: 12px; }
+.report-row { display: flex; justify-content: space-between; gap: 8px; padding: 8px 12px; border-radius: 10px; background: var(--soft); font-size: 12.5px; font-weight: 600; }
+.report-row span:first-child { color: var(--muted); }
+.report-row-val { font-weight: 800; color: var(--text); white-space: nowrap; }
+.report-foot { margin: 20px 0 0; text-align: center; font-size: 12px; color: var(--muted); }
+
+/* Mobile responsiveness */
+@media (max-width: 640px) {
+  main { padding: 16px 14px calc(32px + env(safe-area-inset-bottom, 0px)) 96px; }
+  .card { padding: 20px; border-radius: 20px; }
+  h1 { font-size: 26px; }
+  .top { gap: 10px; margin-bottom: 20px; }
+  .sel { height: 38px; font-size: 12.5px; }
+  .chip { height: 36px; font-size: 12px; padding: 0 12px; }
+  .icon-btn, .um-btn { width: 38px; height: 38px; }
+  .btn { height: 42px; padding: 0 18px; }
+  .tiles { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .tile { padding: 12px; gap: 10px; }
+  .tile .ic { width: 38px; height: 38px; }
+  .bs-head { gap: 12px; }
+  .bs-head h1 { font-size: 22px; }
+  .bs-stats { margin-left: 0; width: 100%; }
+  .bs-stat { flex: 1; justify-content: center; }
+  .bs-tabs { overflow-x: auto; max-width: 100%; }
+  .bs-tabs button { padding: 0 12px; font-size: 12.5px; white-space: nowrap; }
+  .bs-book-head { padding: 12px 14px; gap: 10px; }
+  .bs-lvl { width: 36px; height: 36px; }
+  .bs-chapters { grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 6px; padding: 0 14px 14px; }
+  .bs-ch { height: 36px; font-size: 12px; }
+  .book-grid { grid-template-columns: 1fr; gap: 14px; }
+  .book-cover { min-height: 160px; }
+  .bench-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .bench-card { padding: 12px; }
+  .msg-card { padding: 12px 14px; gap: 12px; }
+  .msg-play { width: 40px; height: 40px; }
+  .msg-form input, .msg-form select, .soul-form select { height: 44px; font-size: 13.5px; }
+  .msg-form input { min-width: 100%; }
+  .admin-section { padding: 16px; border-radius: 16px; }
+  .admin-row { flex-wrap: wrap; }
+  .soul-note { padding: 12px 14px; font-size: 13.5px; }
+  .prayer-grid { grid-template-columns: 1fr; }
+  .timer-display { font-size: 44px; }
+  .report-sheet { padding: 18px; border-radius: 18px; }
+  .report-head { flex-wrap: wrap; }
+  .report-overall { margin-left: 0; width: 100%; display: flex; align-items: baseline; gap: 8px; justify-content: flex-end; }
+  .report-overall strong { font-size: 28px; }
+  .um-drop { right: -8px; }
+}
+@media (max-width: 380px) {
+  .tiles { grid-template-columns: 1fr; }
+  .bench-grid { grid-template-columns: 1fr; }
+  .timer-display { font-size: 38px; }
+}
