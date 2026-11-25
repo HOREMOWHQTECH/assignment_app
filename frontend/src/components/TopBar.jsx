@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
-import { Link } from 'react-router-dom'
 import Icon from './Icon.jsx'
+import UserMenu from './UserMenu.jsx'
 import { useTheme } from '../theme/ThemeContext.jsx'
 
 const EVENTS = ['Annual Cycle', 'Women', 'Ministers', 'Youth', 'December (General)']
@@ -46,10 +46,7 @@ export default function TopBar() {
           <Icon name="sun" className="i sun" />
           <Icon name="moon" className="i moon" />
         </motion.button>
-        <Link className="btn pri" to="/login">
-          <Icon name="login" />
-          Login / Register
-        </Link>
+        <UserMenu />
       </div>
     </motion.div>
   )

@@ -95,6 +95,28 @@ const PATHS = {
   ),
   chevL: <path d="m15 18-6-6 6-6" />,
   chevR: <path d="m9 18 6-6-6-6" />,
+  user: (
+    <>
+      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </>
+  ),
+  logout: (
+    <>
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <path d="m16 17 5-5-5-5" />
+      <path d="M21 12H9" />
+    </>
+  ),
+  star: <path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />,
+  check: <path d="M20 6 9 17l-5-5" />,
+  search: (
+    <>
+      <circle cx="11" cy="11" r="8" />
+      <path d="m21 21-4.35-4.35" />
+    </>
+  ),
+  chevD: <path d="m6 9 6 6 6-6" />,
 }
 
 export default function Icon({ name, className = 'i' }) {

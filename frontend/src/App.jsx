@@ -20,12 +20,13 @@ export default function App() {
       <Route path="/" element={<Dashboard />} />
       <Route path="/register" element={<Register />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/bible-study" element={<Placeholder title="Bible Study" />} />
+      <Route path="/bible-study" element={<BibleStudy />} />
       <Route path="/books" element={<Placeholder title="HOREMOW Books" />} />
       <Route path="/messages" element={<Placeholder title="Messages" />} />
       <Route path="/soul-winning" element={<Placeholder title="Soul Winning" />} />
       <Route path="/prayer-fasting" element={<Placeholder title="Prayer & Fasting" />} />
       <Route path="/reports" element={<Placeholder title="Official Report" />} />
+      <Route path="/settings" element={<Placeholder title="Settings" />} />
     </Routes>
   )
 }
