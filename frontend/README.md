@@ -1,0 +1,1 @@
+Created folders for both backend and frontend structure
