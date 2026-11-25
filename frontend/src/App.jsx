@@ -3,6 +3,8 @@ import Dashboard from './pages/Dashboard.jsx'
 import Register from './pages/Register.jsx'
 import Login from './pages/Login.jsx'
 import BibleStudy from './pages/BibleStudy.jsx'
+import Books from './pages/Books.jsx'
+import BookReader from './pages/BookReader.jsx'
 
 function Placeholder({ title }) {
   return (
@@ -22,7 +24,8 @@ export default function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/login" element={<Login />} />
       <Route path="/bible-study" element={<BibleStudy />} />
-      <Route path="/books" element={<Placeholder title="HOREMOW Books" />} />
+      <Route path="/books" element={<Books />} />
+      <Route path="/books/:bookId" element={<BookReader />} />
       <Route path="/messages" element={<Placeholder title="Messages" />} />
       <Route path="/soul-winning" element={<Placeholder title="Soul Winning" />} />
       <Route path="/prayer-fasting" element={<Placeholder title="Prayer & Fasting" />} />
