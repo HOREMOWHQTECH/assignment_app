@@ -2,8 +2,8 @@ import { useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import AppShell from '../components/AppShell.jsx'
 import Icon from '../components/Icon.jsx'
-import { BIBLE_BOOKS, TOTAL_CHAPTERS, getLevel } from '../data/bible.js'
-import { useBibleProgress } from '../api/bibleStudy.js'
+import { getLevel } from '../data/bible.js'
+import { useBibleProgress, useBibleBooks, bibleStats } from '../api/bibleStudy.js'
 
 const TABS = [
   { key: 'all', label: 'All Books' },
@@ -72,20 +72,24 @@ function BookRow({ book, chapters, onCycle }) {
 }
 
 export default function BibleStudy() {
-  const { progress, cycleChapter, stats } = useBibleProgress()
+  const { progress, cycleChapter } = useBibleProgress()
+  const books = useBibleBooks()
+  const stats = bibleStats(progress, books)
+  const totalChapters = books.reduce((n, b) => n + b.chapters, 0)
   const [tab, setTab] = useState('all')
   const [query, setQuery] = useState('')
 
-  const books = useMemo(() => {
+  const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    return BIBLE_BOOKS.filter((b) => {
-      if (tab !== 'all' && b.testament !== tab) return false
+    return books.filter((b) => {
+      if (tab !== 'all' && tab !== 'custom' && b.testament !== tab) return false
+      if (tab === 'custom' && !b.custom) return false
       if (q && !b.name.toLowerCase().includes(q)) return false
       return true
     })
-  }, [tab, query])
+  }, [tab, query, books])
 
-  const pct = Math.round((stats.done / TOTAL_CHAPTERS) * 100)
+  const pct = Math.round((stats.done / totalChapters) * 100)
 
   return (
     <AppShell>
@@ -93,11 +97,11 @@ export default function BibleStudy() {
         <div className="bs-head">
           <div>
             <h1>Bible Study Tracker</h1>
-            <p className="sub">Read through all {TOTAL_CHAPTERS} chapters — tap a chapter to mark it done or in progress.</p>
+            <p className="sub">Read through all {totalChapters} chapters — tap a chapter to mark it done or in progress.</p>
           </div>
           <div className="bs-stats">
-            <span className="bs-stat"><Icon name="book" />{stats.done}/{TOTAL_CHAPTERS} chapters</span>
-            <span className="bs-stat"><Icon name="check" />{stats.booksComplete}/66 books</span>
+            <span className="bs-stat"><Icon name="book" />{stats.done}/{totalChapters} chapters</span>
+            <span className="bs-stat"><Icon name="check" />{stats.booksComplete}/{books.length} books</span>
             <span className="bs-stat"><Icon name="flame" />{pct}% complete</span>
           </div>
         </div>
@@ -136,7 +140,7 @@ export default function BibleStudy() {
         </div>
 
         <div className="bs-list">
-          {books.map((book) => (
+          {filtered.map((book) => (
             <BookRow
               key={book.name}
               book={book}
@@ -144,7 +148,7 @@ export default function BibleStudy() {
               onCycle={cycleChapter}
             />
           ))}
-          {books.length === 0 && (
+          {filtered.length === 0 && (
             <p style={{ color: 'var(--muted)', textAlign: 'center', padding: '32px 0' }}>
               No books match your search.
             </p>

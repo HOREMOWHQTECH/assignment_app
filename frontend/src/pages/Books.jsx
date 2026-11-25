@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import AppShell from '../components/AppShell.jsx'
 import Icon from '../components/Icon.jsx'
-import { BOOKS } from '../data/books.js'
-import { useBookProgress, bookStats } from '../api/books.js'
+import { useBookProgress, bookStats, useAllBooks } from '../api/books.js'
 
 const AUDIENCE_TABS = [
   { key: 'all', label: 'All' },
@@ -29,12 +28,13 @@ function timeAgo(ts) {
 
 export default function Books() {
   const { progress, markCompleted } = useBookProgress()
-  const stats = bookStats(progress)
+  const allBooks = useAllBooks()
+  const stats = bookStats(progress, allBooks)
   const [audience, setAudience] = useState('all')
 
   const books = useMemo(
-    () => (audience === 'all' ? BOOKS : BOOKS.filter((b) => b.audiences.includes(audience))),
-    [audience],
+    () => (audience === 'all' ? allBooks : allBooks.filter((b) => b.audiences.includes(audience))),
+    [audience, allBooks],
   )
 
   return (
@@ -43,10 +43,10 @@ export default function Books() {
         <div className="bs-head">
           <div>
             <h1>HOREMOW Books</h1>
-            <p className="sub">Read, track your progress, and complete each book — {BOOKS.length} titles in the library.</p>
+            <p className="sub">Read, track your progress, and complete each book — {allBooks.length} titles in the library.</p>
           </div>
           <div className="bs-stats">
-            <span className="bs-stat"><Icon name="book" />{BOOKS.length} books</span>
+            <span className="bs-stat"><Icon name="book" />{allBooks.length} books</span>
             <span className="bs-stat"><Icon name="check" />{stats.completed} completed</span>
             <span className="bs-stat"><Icon name="flame" />{stats.pagesRead} pages read</span>
           </div>

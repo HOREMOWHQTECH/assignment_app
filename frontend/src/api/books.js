@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { BOOKS } from '../data/books.js'
+import { useAdminBooks } from './admin.js'
 
 const PROGRESS_KEY = 'horemow-book-progress'
 const HIGHLIGHT_KEY = 'horemow-book-highlights'
@@ -64,10 +65,16 @@ export function useHighlights(bookId) {
   return { highlights: list, add, remove }
 }
 
-export function bookStats(progress) {
+// All books: built-in + admin-added
+export function useAllBooks() {
+  const { books: custom } = useAdminBooks()
+  return useMemo(() => [...BOOKS, ...custom], [custom])
+}
+
+export function bookStats(progress, books = BOOKS) {
   let pagesRead = 0
   let completed = 0
-  for (const book of BOOKS) {
+  for (const book of books) {
     const p = progress[book.id]
     if (p?.completed) completed += 1
     if (!p) continue

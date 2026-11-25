@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 
-const KEY = 'horemow-messages-listened'
+const KEY = 'horemow-messages-log'
 
 function load() {
   try {
@@ -11,18 +11,23 @@ function load() {
   }
 }
 
-// Shape: string[] of listened message ids
+// Shape: [{ id, title, speaker, audience, date }]
 export function useMessages() {
-  const [listened, setListened] = useState(load)
+  const [entries, setEntries] = useState(load)
 
   useEffect(() => {
-    window.localStorage.setItem(KEY, JSON.stringify(listened))
-  }, [listened])
+    window.localStorage.setItem(KEY, JSON.stringify(entries))
+  }, [entries])
 
-  const toggle = useCallback((id) => {
-    setListened((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
-    // TODO: POST /api/messages/:id/listened
+  const add = useCallback((entry) => {
+    setEntries((prev) => [{ id: crypto.randomUUID(), date: new Date().toISOString(), ...entry }, ...prev])
+    // TODO: POST /api/messages
   }, [])
 
-  return { listened, toggle }
+  const remove = useCallback((id) => {
+    setEntries((prev) => prev.filter((e) => e.id !== id))
+    // TODO: DELETE /api/messages/:id
+  }, [])
+
+  return { entries, add, remove }
 }

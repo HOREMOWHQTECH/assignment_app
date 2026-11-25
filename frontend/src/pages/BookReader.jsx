@@ -3,8 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import AppShell from '../components/AppShell.jsx'
 import Icon from '../components/Icon.jsx'
-import { getBook } from '../data/books.js'
-import { useBookProgress, useHighlights } from '../api/books.js'
+import { useAllBooks, useBookProgress, useHighlights } from '../api/books.js'
 
 function renderHighlighted(text, quotes) {
   if (!quotes.length) return text
@@ -25,7 +24,8 @@ function renderHighlighted(text, quotes) {
 
 export default function BookReader() {
   const { bookId } = useParams()
-  const book = getBook(bookId)
+  const allBooks = useAllBooks()
+  const book = allBooks.find((b) => b.id === bookId)
   const { progress, update, markCompleted } = useBookProgress()
   const { highlights, add } = useHighlights(bookId)
   const saved = progress[bookId] || { chapter: 0, page: 0, completed: false }

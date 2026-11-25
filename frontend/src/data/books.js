@@ -64,3 +64,21 @@ export const BOOKS = RAW.map((b) => ({
 export function getBook(id) {
   return BOOKS.find((b) => b.id === id)
 }
+
+// Factory for admin-added books (chapters/pages/cover auto-generated).
+export function createBook({ title, author, audiences = ['general'], chapters = 3, pagesPerChapter = 4 }) {
+  const hue = Math.floor(Math.random() * 360)
+  const seed = Math.floor(Math.random() * 10)
+  const chs = makeChapters(chapters, pagesPerChapter, seed)
+  return {
+    id: `custom-${crypto.randomUUID()}`,
+    title,
+    author,
+    audiences,
+    hue,
+    chapters: chs,
+    cover: coverDataUri(title, author, hue),
+    pageCount: chs.reduce((n, c) => n + c.pages.length, 0),
+    custom: true,
+  }
+}

@@ -79,3 +79,8 @@ export function getLevel(done, total) {
   if (pct >= 0.34) return { key: 'silver', label: 'Silver', icon: 'shield' }
   return { key: 'bronze', label: 'Bronze', icon: 'book' }
 }
+
+// Factory for admin-added bible books.
+export function createBibleBook(name, chapters) {
+  return { id: `custom-${crypto.randomUUID()}`, name, chapters: Math.max(1, parseInt(chapters, 10) || 1), testament: 'custom', custom: true }
+}

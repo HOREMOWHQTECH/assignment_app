@@ -47,6 +47,10 @@ export default function UserMenu() {
             <Link className="um-item" to="/settings" onClick={() => setOpen(false)}>
               Settings
             </Link>
+            <Link className="um-item" to="/admin" onClick={() => setOpen(false)}>
+              <Icon name="shield" />
+              Admin
+            </Link>
             <button className="um-item danger" type="button" onClick={logout}>
               <Icon name="logout" />
               Log out

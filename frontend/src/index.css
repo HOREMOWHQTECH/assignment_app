@@ -343,3 +343,26 @@ h1 { margin: 6px 0 0; font-size: clamp(28px, 3.4vw, 40px); line-height: 1.12; le
 .msg-info span { color: var(--muted); font-size: 12.5px; font-weight: 600; }
 .msg-info .book-tag { align-self: flex-start; margin-top: 2px; }
 @media (max-width: 640px) { .msg-card { flex-wrap: wrap; } .msg-info { flex-basis: calc(100% - 62px); } }
+
+/* Message log form */
+.msg-form { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 8px; }
+.msg-form input, .msg-form select { height: 46px; padding: 0 16px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--text); font: 600 14px Manrope, system-ui, sans-serif; outline: none; }
+.msg-form input { flex: 1; min-width: 160px; }
+.msg-form input:focus, .msg-form select:focus { border-color: var(--accent); }
+.msg-form select { cursor: pointer; }
+.form-error { margin: 0 0 14px; color: var(--amber); font-size: 13px; font-weight: 600; }
+
+/* Tag picker (multi-select events) */
+.tag-picker { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: -4px 0 14px; }
+.tag-picker-label { font-size: 12.5px; font-weight: 700; color: var(--muted); }
+.book-tag.pick { cursor: pointer; opacity: .55; transition: all .15s; }
+.book-tag.pick.on { opacity: 1; box-shadow: 0 0 0 2px var(--accent); }
+
+/* Admin page */
+.admin-section { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 22px; margin-bottom: 18px; }
+.admin-section h2 { margin: 0 0 4px; font-size: 17px; }
+.admin-section .sub { margin: 0 0 16px; }
+.admin-list { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+.admin-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; font-size: 13.5px; }
+.bench-input { width: 76px; height: 34px; padding: 0 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--text); font: 800 14px Manrope, system-ui, sans-serif; text-align: center; outline: none; }
+.bench-input:focus { border-color: var(--accent); }

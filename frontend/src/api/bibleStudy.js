@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { BIBLE_BOOKS } from '../data/bible.js'
+import { useAdminBibleBooks } from './admin.js'
 
 const STORAGE_KEY = 'horemow-bible-progress'
 
@@ -32,20 +33,28 @@ export function useBibleProgress() {
     // TODO: POST /api/bible-study/log { book, chapter, status }
   }, [])
 
-  const stats = useMemo(() => {
-    let done = 0
-    let inProgress = 0
-    let booksComplete = 0
-    for (const book of BIBLE_BOOKS) {
-      const chapters = progress[book.name] || {}
-      const doneCount = Object.values(chapters).filter((s) => s === 'done').length
-      const progCount = Object.values(chapters).filter((s) => s === 'progress').length
-      done += doneCount
-      inProgress += progCount
-      if (doneCount === book.chapters) booksComplete += 1
-    }
-    return { done, inProgress, booksComplete }
-  }, [progress])
+  const stats = useMemo(() => bibleStats(progress, BIBLE_BOOKS), [progress])
 
   return { progress, cycleChapter, stats }
+}
+
+// All bible books: canonical + admin-added
+export function useBibleBooks() {
+  const { books: custom } = useAdminBibleBooks()
+  return useMemo(() => [...BIBLE_BOOKS, ...custom], [custom])
+}
+
+export function bibleStats(progress, books) {
+  let done = 0
+  let inProgress = 0
+  let booksComplete = 0
+  for (const book of books) {
+    const chapters = progress[book.name] || {}
+    const doneCount = Object.values(chapters).filter((s) => s === 'done').length
+    const progCount = Object.values(chapters).filter((s) => s === 'progress').length
+    done += doneCount
+    inProgress += progCount
+    if (doneCount === book.chapters) booksComplete += 1
+  }
+  return { done, inProgress, booksComplete }
 }
