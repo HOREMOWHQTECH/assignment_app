@@ -1,5 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import Dashboard from './pages/Dashboard.jsx'
+import Register from './pages/Register.jsx'
+import Login from './pages/Login.jsx'
 
 function Placeholder({ title }) {
   return (
@@ -16,6 +18,8 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Dashboard />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/login" element={<Login />} />
       <Route path="/bible-study" element={<Placeholder title="Bible Study" />} />
       <Route path="/books" element={<Placeholder title="HOREMOW Books" />} />
       <Route path="/messages" element={<Placeholder title="Messages" />} />
