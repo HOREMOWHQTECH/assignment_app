@@ -20,10 +20,11 @@ function formatDate(iso) {
 const emptyForm = { name: '', phone: '', address: '', note: '', tag: 'none', events: ['general'] }
 
 export default function SoulWinning() {
-  const { souls, add, remove } = useSouls()
+  const { souls, add, remove, update } = useSouls()
   const { targets } = useSoulTargets()
   const [event, setEvent] = useState('all')
   const [form, setForm] = useState(emptyForm)
+  const [editingId, setEditingId] = useState(null)
   const [error, setError] = useState('')
 
   const perEvent = useMemo(() => {
@@ -56,16 +57,41 @@ export default function SoulWinning() {
       setError('Select at least one event.')
       return
     }
-    add({
+    const payload = {
       name: form.name.trim(),
       phone: form.phone.trim(),
       address: form.address.trim(),
       note: form.note.trim(),
       tag: form.tag,
       events: form.events,
-    })
+    }
+    if (editingId) {
+      update(editingId, payload)
+      setEditingId(null)
+    } else {
+      add(payload)
+    }
     setForm(emptyForm)
     setError('')
+  }
+
+  const startEdit = (s) => {
+    setEditingId(s.id)
+    setForm({
+      name: s.name,
+      phone: s.phone,
+      address: s.address || '',
+      note: s.note || '',
+      tag: s.tag,
+      events: s.events?.length ? s.events : ['general'],
+    })
+    setError('')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const cancelEdit = () => {
+    setEditingId(null)
+    setForm(emptyForm)
   }
 
   return (
@@ -109,7 +135,12 @@ export default function SoulWinning() {
               <option key={t.key} value={t.key}>{t.label}</option>
             ))}
           </select>
-          <button className="btn pri" type="submit"><Icon name="plus" /> Add soul</button>
+          <button className="btn pri" type="submit">
+            <Icon name={editingId ? 'check' : 'plus'} /> {editingId ? 'Save changes' : 'Add soul'}
+          </button>
+          {editingId && (
+            <button className="btn out" type="button" onClick={cancelEdit}>Cancel</button>
+          )}
         </form>
         <div className="tag-picker">
           <span className="tag-picker-label">Events:</span>
@@ -155,9 +186,14 @@ export default function SoulWinning() {
                   <em className={`book-tag soul-tag-${s.tag}`}>{SOUL_TAG_LABEL[s.tag]}</em>
                 </span>
               </div>
-              <button className="btn ghost sm" type="button" onClick={() => remove(s.id)} aria-label={`Delete ${s.name}`}>
-                <Icon name="trash" />
-              </button>
+              <div className="msg-actions">
+                <button className="btn ghost sm" type="button" onClick={() => startEdit(s)} aria-label={`Edit ${s.name}`}>
+                  <Icon name="edit" />
+                </button>
+                <button className="btn ghost sm" type="button" onClick={() => remove(s.id)} aria-label={`Delete ${s.name}`}>
+                  <Icon name="trash" />
+                </button>
+              </div>
             </motion.div>
           ))}
           {list.length === 0 && (

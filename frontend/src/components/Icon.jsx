@@ -120,6 +120,12 @@ const PATHS = {
   play: <path d="M6 4.5v15l13-7.5-13-7.5z" />,
   stop: <rect x="6" y="6" width="12" height="12" rx="2" />,
   plus: <path d="M12 5v14M5 12h14" />,
+  edit: (
+    <>
+      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+      <path d="m15 5 4 4" />
+    </>
+  ),
   trash: (
     <>
       <path d="M3 6h18" />

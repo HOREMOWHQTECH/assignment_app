@@ -29,5 +29,10 @@ export function useSouls() {
     // TODO: DELETE /api/souls/:id
   }, [])
 
-  return { souls, add, remove }
+  const update = useCallback((id, patch) => {
+    setSouls((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)))
+    // TODO: PUT /api/souls/:id
+  }, [])
+
+  return { souls, add, remove, update }
 }
