@@ -19,8 +19,8 @@ export default function Sidebar({ collapsed, onToggle }) {
   return (
     <motion.aside
       className="side"
-      initial={{ opacity: 0, x: -16 }}
-      animate={{ opacity: 1, x: 0 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
     >
       <div className="brand">
@@ -38,7 +38,13 @@ export default function Sidebar({ collapsed, onToggle }) {
       </div>
       <nav aria-label="Main">
         {links.map((link) => (
-          <NavLink key={link.to} to={link.to} end={link.end} title={link.label}>
+          <NavLink
+            key={link.to}
+            to={link.to}
+            end={link.end}
+            title={link.label}
+            onClick={() => { if (window.innerWidth <= 900) onToggle() }}
+          >
             <Icon name={link.icon} />
             <span className="nav-label">{link.label}</span>
           </NavLink>

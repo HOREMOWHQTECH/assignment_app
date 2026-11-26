@@ -117,6 +117,7 @@ const PATHS = {
     </>
   ),
   chevD: <path d="m6 9 6 6 6-6" />,
+  menu: <path d="M4 6h16M4 12h16M4 18h16" />,
   play: <path d="M6 4.5v15l13-7.5-13-7.5z" />,
   stop: <rect x="6" y="6" width="12" height="12" rx="2" />,
   plus: <path d="M12 5v14M5 12h14" />,
