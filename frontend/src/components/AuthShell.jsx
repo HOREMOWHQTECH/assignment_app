@@ -9,12 +9,13 @@ const GoogleIcon = () => (
   </svg>
 )
 
-export function GoogleButton({ onClick, label = 'Continue with Google' }) {
+export function GoogleButton({ onClick, label = 'Continue with Google', disabled = false }) {
   return (
     <motion.button
       className="google-btn"
       type="button"
       onClick={onClick}
+      disabled={disabled}
       whileHover={{ y: -1 }}
       whileTap={{ scale: 0.98 }}
     >

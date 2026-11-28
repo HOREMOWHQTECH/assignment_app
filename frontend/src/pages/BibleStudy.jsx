@@ -89,7 +89,7 @@ export default function BibleStudy() {
     })
   }, [tab, query, books])
 
-  const pct = Math.round((stats.done / totalChapters) * 100)
+  const pct = totalChapters ? Math.round((stats.done / totalChapters) * 100) : 0
 
   return (
     <AppShell>

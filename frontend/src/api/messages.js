@@ -1,33 +1,34 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { api } from './client.js'
 
-const KEY = 'horemow-messages-log'
+const KEY = ['messages']
 
-function load() {
-  try {
-    const raw = window.localStorage.getItem(KEY)
-    return raw ? JSON.parse(raw) : []
-  } catch {
-    return []
-  }
-}
-
-// Shape: [{ id, title, speaker, audience, date }]
 export function useMessages() {
-  const [entries, setEntries] = useState(load)
+  const queryClient = useQueryClient()
+  const query = useQuery({
+    queryKey: KEY,
+    queryFn: async () => (await api('/messages')).entries,
+  })
 
-  useEffect(() => {
-    window.localStorage.setItem(KEY, JSON.stringify(entries))
-  }, [entries])
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: KEY })
+    queryClient.invalidateQueries({ queryKey: ['reports', 'summary'] })
+  }
 
-  const add = useCallback((entry) => {
-    setEntries((prev) => [{ id: crypto.randomUUID(), date: new Date().toISOString(), ...entry }, ...prev])
-    // TODO: POST /api/messages
-  }, [])
+  const addMutation = useMutation({
+    mutationFn: (entry) => api('/messages', { method: 'POST', body: entry }),
+    onSuccess: invalidate,
+  })
+  const removeMutation = useMutation({
+    mutationFn: (id) => api(`/messages/${id}`, { method: 'DELETE' }),
+    onSuccess: invalidate,
+  })
 
-  const remove = useCallback((id) => {
-    setEntries((prev) => prev.filter((e) => e.id !== id))
-    // TODO: DELETE /api/messages/:id
-  }, [])
-
-  return { entries, add, remove }
+  return {
+    entries: query.data || [],
+    loading: query.isLoading,
+    error: query.error,
+    add: addMutation.mutateAsync,
+    remove: removeMutation.mutateAsync,
+  }
 }

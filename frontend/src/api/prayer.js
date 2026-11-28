@@ -1,33 +1,34 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { api } from './client.js'
 
-const KEY = 'horemow-prayer-sessions'
+const KEY = ['prayer', 'sessions']
 
-function load() {
-  try {
-    const raw = window.localStorage.getItem(KEY)
-    return raw ? JSON.parse(raw) : []
-  } catch {
-    return []
-  }
-}
-
-// Shape: [{ id, minutes, events: [], date }]
 export function usePrayerSessions() {
-  const [sessions, setSessions] = useState(load)
+  const queryClient = useQueryClient()
+  const query = useQuery({
+    queryKey: KEY,
+    queryFn: async () => (await api('/prayer/sessions')).sessions,
+  })
 
-  useEffect(() => {
-    window.localStorage.setItem(KEY, JSON.stringify(sessions))
-  }, [sessions])
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: KEY })
+    queryClient.invalidateQueries({ queryKey: ['reports', 'summary'] })
+  }
 
-  const add = useCallback((entry) => {
-    setSessions((prev) => [{ id: crypto.randomUUID(), date: new Date().toISOString(), ...entry }, ...prev])
-    // TODO: POST /api/prayer/sessions
-  }, [])
+  const addMutation = useMutation({
+    mutationFn: (entry) => api('/prayer/sessions', { method: 'POST', body: entry }),
+    onSuccess: invalidate,
+  })
+  const removeMutation = useMutation({
+    mutationFn: (id) => api(`/prayer/sessions/${id}`, { method: 'DELETE' }),
+    onSuccess: invalidate,
+  })
 
-  const remove = useCallback((id) => {
-    setSessions((prev) => prev.filter((s) => s.id !== id))
-    // TODO: DELETE /api/prayer/sessions/:id
-  }, [])
-
-  return { sessions, add, remove }
+  return {
+    sessions: query.data || [],
+    loading: query.isLoading,
+    error: query.error,
+    add: addMutation.mutateAsync,
+    remove: removeMutation.mutateAsync,
+  }
 }

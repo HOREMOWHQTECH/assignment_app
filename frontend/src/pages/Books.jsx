@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import AppShell from '../components/AppShell.jsx'
 import Icon from '../components/Icon.jsx'
-import { useBookProgress, bookStats, useAllBooks } from '../api/books.js'
+import { useBookProgress, bookStats, useAllBooks, useBookCovers } from '../api/books.js'
 
 const AUDIENCE_TABS = [
   { key: 'all', label: 'All' },
@@ -29,11 +29,12 @@ function timeAgo(ts) {
 export default function Books() {
   const { progress, markCompleted } = useBookProgress()
   const allBooks = useAllBooks()
-  const stats = bookStats(progress, allBooks)
+  const { completed } = bookStats(progress, allBooks)
+  const covers = useBookCovers(allBooks)
   const [audience, setAudience] = useState('all')
 
   const books = useMemo(
-    () => (audience === 'all' ? allBooks : allBooks.filter((b) => b.audiences.includes(audience))),
+    () => (audience === 'all' ? allBooks : allBooks.filter((b) => (b.audiences || []).includes(audience))),
     [audience, allBooks],
   )
 
@@ -47,8 +48,7 @@ export default function Books() {
           </div>
           <div className="bs-stats">
             <span className="bs-stat"><Icon name="book" />{allBooks.length} books</span>
-            <span className="bs-stat"><Icon name="check" />{stats.completed} completed</span>
-            <span className="bs-stat"><Icon name="flame" />{stats.pagesRead} pages read</span>
+            <span className="bs-stat"><Icon name="check" />{completed} completed</span>
           </div>
         </div>
 
@@ -69,66 +69,76 @@ export default function Books() {
           </div>
         </div>
 
-        <div className="book-grid">
-          {books.map((book, i) => {
-            const p = progress[book.id] || { chapter: 0, page: 0, completed: false }
-            const started = p.completed || p.page > 0 || p.chapter > 0
-            const pagesCovered = p.completed
-              ? book.pageCount
-              : book.chapters.slice(0, p.chapter).reduce((n, c) => n + c.pages.length, 0) + p.page + 1
-            const pct = book.pdf ? (p.completed ? 100 : 0) : Math.round((pagesCovered / book.pageCount) * 100)
-            return (
-              <motion.div
-                key={book.id}
-                className="book-card"
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.04, duration: 0.35 }}
-              >
-                <Link className="book-cover" to={`/books/${book.id}`}>
-                  <img src={book.cover} alt={`${book.title} cover`} />
-                  {p.completed && <span className="book-done-tag"><Icon name="check" /> Completed</span>}
-                </Link>
-                <div className="book-info">
-                  <div className="book-info-top">
-                    <div>
-                      <strong>{book.title}</strong>
-                      <span>{book.author} · {book.pdf ? 'PDF document' : `${book.chapters.length} chapters · ${book.pageCount} pages`}</span>
-                      <span className="book-tags">
-                        {book.audiences.map((a) => (
-                          <em key={a} className={`book-tag ${a}`}>{AUDIENCE_LABEL[a]}</em>
-                        ))}
-                      </span>
-                    </div>
-                    <span className="book-pages">{book.pdf ? (p.completed ? 'Completed' : 'PDF') : `${pagesCovered}/${book.pageCount} pages`}</span>
-                  </div>
-                  <div className="book-bar"><i style={{ width: `${pct}%` }} /></div>
-                  <div className="book-actions">
-                    <Link className="btn pri sm" to={`/books/${book.id}`}>
-                      <Icon name="book" /> {p.completed ? 'Read again' : started ? 'Continue' : 'Read'}
-                    </Link>
-                    {!p.completed && (
-                      <button
-                        className="btn ghost sm"
-                        type="button"
-                        onClick={() => markCompleted(book.id, true)}
-                        title="Mark as completed (e.g. finished the hard copy)"
-                      >
-                        <Icon name="check" /> Done
-                      </button>
+        {books.length === 0 ? (
+          <p style={{ color: 'var(--muted)', textAlign: 'center', padding: '48px 0' }}>
+            No books have been uploaded yet. An admin can add PDF titles from the Admin page.
+          </p>
+        ) : (
+          <div className="book-grid">
+            {books.map((book, i) => {
+              const p = progress[book.id] || {}
+              const started = p.completed || Boolean(p.lastRead)
+              const pct = p.completed ? 100 : 0
+              return (
+                <motion.div
+                  key={book.id}
+                  className="book-card"
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.04, duration: 0.35 }}
+                >
+                  <Link className="book-cover" to={`/books/${book.id}`}>
+                    {covers[book.id] ? (
+                      <img src={covers[book.id]} alt={`${book.title} cover`} />
+                    ) : (
+                      <div className="book-cover-text">
+                        <strong>{book.title}</strong>
+                        <span>{book.author}</span>
+                      </div>
                     )}
+                    {p.completed && <span className="book-done-tag"><Icon name="check" /> Completed</span>}
+                  </Link>
+                  <div className="book-info">
+                    <div className="book-info-top">
+                      <div>
+                        <strong>{book.title}</strong>
+                        <span>{book.author} · {book.pdf ? 'PDF document' : 'No PDF uploaded'}</span>
+                        <span className="book-tags">
+                          {(book.audiences || []).map((a) => (
+                            <em key={a} className={`book-tag ${a}`}>{AUDIENCE_LABEL[a] || a}</em>
+                          ))}
+                        </span>
+                      </div>
+                      <span className="book-pages">{p.completed ? 'Completed' : 'PDF'}</span>
+                    </div>
+                    <div className="book-bar"><i style={{ width: `${pct}%` }} /></div>
+                    <div className="book-actions">
+                      <Link className="btn pri sm" to={`/books/${book.id}`}>
+                        <Icon name="book" /> {p.completed ? 'Read again' : started ? 'Continue' : 'Read'}
+                      </Link>
+                      {!p.completed && (
+                        <button
+                          className="btn ghost sm"
+                          type="button"
+                          onClick={() => markCompleted(book.id, true)}
+                          title="Mark as completed (e.g. finished the hard copy)"
+                        >
+                          <Icon name="check" /> Done
+                        </button>
+                      )}
+                    </div>
+                    <div className="book-foot">
+                      <span className="book-status">
+                        {p.completed ? 'Completed' : started ? 'In progress' : 'Not started'}
+                      </span>
+                      {p.lastRead && <span className="book-lastread">Last read {timeAgo(p.lastRead)}</span>}
+                    </div>
                   </div>
-                  <div className="book-foot">
-                    <span className="book-status">
-                      {p.completed ? 'Completed' : started ? 'In progress' : 'Not started'}
-                    </span>
-                    {p.lastRead && <span className="book-lastread">Last read {timeAgo(p.lastRead)}</span>}
-                  </div>
-                </div>
-              </motion.div>
-            )
-          })}
-        </div>
+                </motion.div>
+              )
+            })}
+          </div>
+        )}
       </main>
     </AppShell>
   )

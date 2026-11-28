@@ -1,40 +1,26 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { api } from './client.js'
 
-const KEY = 'horemow-app-settings'
+const KEY = ['settings']
 
-const DEFAULTS = {
-  modules: {
-    bibleStudy: true,
-    books: true,
-    messages: true,
-    soulWinning: true,
-    prayer: true,
-    reports: true,
-  },
-}
-
-function load() {
-  try {
-    const raw = window.localStorage.getItem(KEY)
-    const parsed = raw ? JSON.parse(raw) : {}
-    return { modules: { ...DEFAULTS.modules, ...(parsed.modules || {}) } }
-  } catch {
-    return DEFAULTS
-  }
-}
-
-// Global app settings controlled by admin (module visibility, etc.)
 export function useAppSettings() {
-  const [settings, setSettings] = useState(load)
+  const queryClient = useQueryClient()
+  const query = useQuery({
+    queryKey: KEY,
+    queryFn: () => api('/settings'),
+  })
 
-  useEffect(() => {
-    window.localStorage.setItem(KEY, JSON.stringify(settings))
-  }, [settings])
+  const mutation = useMutation({
+    mutationFn: ({ key, enabled }) => api('/admin/settings', {
+      method: 'PUT',
+      body: { modules: { [key]: enabled } },
+    }),
+    onSuccess: (response) => queryClient.setQueryData(KEY, response.value),
+  })
 
-  const setModule = useCallback((key, enabled) => {
-    setSettings((p) => ({ ...p, modules: { ...p.modules, [key]: !!enabled } }))
-    // TODO: PUT /api/admin/settings
-  }, [])
-
-  return { settings, setModule }
+  return {
+    settings: query.data || { modules: {} },
+    loading: query.isLoading,
+    setModule: (key, enabled) => mutation.mutateAsync({ key, enabled }),
+  }
 }

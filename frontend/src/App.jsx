@@ -1,4 +1,5 @@
-import { Routes, Route } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
+import { useAuth } from './auth/AuthContext.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import Register from './pages/Register.jsx'
 import Login from './pages/Login.jsx'
@@ -12,32 +13,49 @@ import PrayerFasting from './pages/PrayerFasting.jsx'
 import Reports from './pages/Reports.jsx'
 import Settings from './pages/Settings.jsx'
 
-function Placeholder({ title }) {
+function Loading() {
   return (
-    <div className="app">
-      <main style={{ padding: 40 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 800 }}>{title}</h1>
-        <p style={{ color: 'var(--muted)' }}>Coming soon — awaiting backend API.</p>
-      </main>
+    <div className="app" style={{ display: 'grid', placeItems: 'center', minHeight: '100vh' }}>
+      <p className="sub">Loading…</p>
     </div>
   )
 }
 
+function RequireAuth({ adminOnly = false, children }) {
+  const { user, loading } = useAuth()
+  if (loading) return <Loading />
+  if (!user) return <Navigate to="/login" replace />
+  if (adminOnly && user.role !== 'admin') return <Navigate to="/" replace />
+  return children
+}
+
+function GuestOnly({ children }) {
+  const { user, loading } = useAuth()
+  if (loading) return <Loading />
+  if (user) return <Navigate to="/" replace />
+  return children
+}
+
+const protectedRoute = (element, adminOnly = false) => (
+  <RequireAuth adminOnly={adminOnly}>{element}</RequireAuth>
+)
+
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<Dashboard />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/bible-study" element={<BibleStudy />} />
-      <Route path="/books" element={<Books />} />
-      <Route path="/books/:bookId" element={<BookReader />} />
-      <Route path="/messages" element={<Messages />} />
-      <Route path="/soul-winning" element={<SoulWinning />} />
-      <Route path="/prayer-fasting" element={<PrayerFasting />} />
-      <Route path="/reports" element={<Reports />} />
-      <Route path="/admin" element={<Admin />} />
-      <Route path="/settings" element={<Settings />} />
+      <Route path="/login" element={<GuestOnly><Login /></GuestOnly>} />
+      <Route path="/register" element={<GuestOnly><Register /></GuestOnly>} />
+      <Route path="/" element={protectedRoute(<Dashboard />)} />
+      <Route path="/bible-study" element={protectedRoute(<BibleStudy />)} />
+      <Route path="/books" element={protectedRoute(<Books />)} />
+      <Route path="/books/:bookId" element={protectedRoute(<BookReader />)} />
+      <Route path="/messages" element={protectedRoute(<Messages />)} />
+      <Route path="/soul-winning" element={protectedRoute(<SoulWinning />)} />
+      <Route path="/prayer-fasting" element={protectedRoute(<PrayerFasting />)} />
+      <Route path="/reports" element={protectedRoute(<Reports />)} />
+      <Route path="/settings" element={protectedRoute(<Settings />)} />
+      <Route path="/admin" element={protectedRoute(<Admin />, true)} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }

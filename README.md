@@ -2,7 +2,9 @@
 
 React + Vite frontend for tracking HOREMOW assignments: Bible study, book reading, message logs, soul winning, prayer & fasting, and progress reports.
 
-All data is currently persisted in **localStorage** (keys prefixed `horemow-`). Each API module in `frontend/src/api/` contains `TODO` comments marking the backend endpoint each function should call once the API is ready.
+All data is persisted in **MongoDB** through the Express API in [`backend/`](./backend/README.md). The frontend API modules in `frontend/src/api/` call these endpoints with a Bearer token from login/register.
+
+Admin-only endpoints are enforced on the backend with `protect` + `requireAdmin`, so members and leaders receive `403` even if they call them directly.
 
 ## Required backend APIs
 
@@ -10,13 +12,15 @@ Base URL: `/api` (assumed; adjust per environment). All endpoints require auth (
 
 ### Auth
 
-| Method | Endpoint | Purpose | Frontend TODO location |
+| Method | Endpoint | Purpose | Frontend module |
 |---|---|---|---|
-| POST | `/auth/register` | Register (name, email, password, role) | `pages/Register.jsx` |
+| POST | `/auth/register` | Register (name, email, password, country, state, chapter, zone, role) | `pages/Register.jsx` |
 | POST | `/auth/login` | Login (email, password) | `pages/Login.jsx` |
 | POST | `/auth/google` | Google OAuth sign-in | `pages/Login.jsx`, `pages/Register.jsx` |
 | POST | `/auth/logout` | Invalidate session | `components/UserMenu.jsx` |
-| GET | `/auth/me` | Current user profile | — |
+| GET | `/auth/me` | Current user profile | `auth/AuthContext.jsx` |
+| PATCH | `/auth/me` | Edit profile details | `pages/Settings.jsx` |
+| PATCH | `/auth/password` | Change password | `pages/Settings.jsx` |
 
 ### Bible Study
 
@@ -26,24 +30,21 @@ Base URL: `/api` (assumed; adjust per environment). All endpoints require auth (
 | GET | `/bible/progress` | User's chapter statuses `{ [book]: { [chapter]: 'done' \| 'progress' } }` |
 | POST | `/bible/progress` | Log a chapter status change `{ book, chapter, status }` |
 
-Storage key today: `horemow-bible-progress` → `api/bibleStudy.js`
+Frontend module: `api/bibleStudy.js`
 
 ### Books (library)
 
 | Method | Endpoint | Purpose |
 |---|---|---|
-| GET | `/books` | List all books (built-in + admin-added) with chapters, pages, cover, audiences |
-| GET | `/books/:id` | Book detail incl. chapter/page content |
-| GET | `/books/:id/progress` | Reading position `{ chapter, page, completed, lastRead }` |
-| PATCH | `/books/:id/progress` | Update reading position |
-| POST | `/books/:id/complete` | Mark book completed (hard-copy read) |
-| GET | `/books/:id/highlights` | List highlights `{ chapter, page, quote }[]` |
-| POST | `/books/:id/highlights` | Add highlight |
-| DELETE | `/books/:id/highlights/:index` | Remove highlight |
-| GET | `/books/:id/file` | Download the uploaded PDF binary (admin-added books) |
+| GET | `/books` | List admin-uploaded PDF books `{ id, title, author, audiences, pdf, fileUrl, coverUrl }` |
+| GET | `/books/:id` | Book metadata |
+| GET | `/books/:id/progress` | Reading state `{ completed, lastRead }` |
+| PATCH | `/books/:id/progress` | Update completion/last-read state |
+| POST | `/books/:id/complete` | Mark book completed |
+| GET | `/books/:id/file` | Stream the uploaded PDF binary |
+| GET | `/books/:id/cover` | Stream the admin-uploaded cover image |
 
-Storage keys: `horemow-book-progress`, `horemow-book-highlights`, `horemow-admin-books` → `api/books.js`, `api/admin.js`
-PDF binaries are currently stored in **IndexedDB** (`horemow-pdfs` DB) via `api/pdfStore.js` — move to object storage / `GET /books/:id/file` on the backend.
+Frontend modules: `api/books.js`, `api/admin.js`. There is no generated book catalog, fake cover, or placeholder chapter/page text — every book comes from an admin PDF upload (with an optional real cover image), stored in MongoDB GridFS and served by `GET /books/:id/file` and `GET /books/:id/cover`.
 
 ### Messages log
 
@@ -53,7 +54,7 @@ PDF binaries are currently stored in **IndexedDB** (`horemow-pdfs` DB) via `api/
 | POST | `/messages` | Log a message listened to |
 | DELETE | `/messages/:id` | Remove a log entry |
 
-Storage key: `horemow-messages-log` → `api/messages.js`
+Frontend module: `api/messages.js`
 
 ### Soul Winning
 
@@ -64,7 +65,7 @@ Storage key: `horemow-messages-log` → `api/messages.js`
 | PUT | `/souls/:id` | Update a soul entry |
 | DELETE | `/souls/:id` | Remove a soul entry |
 
-Storage key: `horemow-souls` → `api/souls.js`
+Frontend module: `api/souls.js`
 
 ### Prayer & Fasting
 
@@ -74,55 +75,38 @@ Storage key: `horemow-souls` → `api/souls.js`
 | POST | `/prayer/sessions` | Save a session (timer stop or manual entry) |
 | DELETE | `/prayer/sessions/:id` | Remove a session |
 
-Storage key: `horemow-prayer-sessions` → `api/prayer.js`
+Frontend module: `api/prayer.js`. Sessions store exact `seconds`; `minutes` is kept in sync for targets and reports.
 
 ### Admin / configuration
 
 | Method | Endpoint | Purpose |
 |---|---|---|
-| GET/POST/DELETE | `/admin/books` | Manage library books. `POST` accepts `multipart/form-data`: `title`, `author`, `audiences[]`, `file` (PDF). Returns book metadata incl. `pdf: true` and a file URL. |
+| GET/POST/DELETE | `/admin/books` | Manage library books. `POST` accepts `multipart/form-data`: `title`, `author`, `audiences[]`, `file` (PDF), optional `cover` (image). Returns book metadata incl. `pdf: true`, `fileUrl`, and `coverUrl` when a cover was uploaded. |
 | GET/POST/DELETE | `/admin/bible-books` | Manage Bible book list |
 | GET/PUT | `/admin/benchmarks` | Message benchmarks per event `{ general, women, ministries, youth }` |
 | GET/PUT | `/admin/soul-targets` | Soul-winning targets per event |
 | GET/PUT | `/admin/prayer-targets` | Daily prayer minutes per event |
 | GET/PUT | `/admin/settings` | App module toggles `{ modules: { bibleStudy, books, messages, soulWinning, prayer, reports } }` |
 
-Storage keys: `horemow-admin-books`, `horemow-admin-bible-books`, `horemow-benchmarks`, `horemow-soul-targets`, `horemow-prayer-targets`, `horemow-app-settings` → `api/admin.js`, `api/settings.js`
+Frontend modules: `api/admin.js`, `api/settings.js`. All of these are implemented in the Admin page (`/admin`), which is reachable only by users with `role: 'admin'`.
 
 ### Voice Assistant
 
-The sidebar "Voice AI Assistant" currently runs fully client-side (Web Speech API + keyword routing). To make it smart, add:
+The sidebar "Voice AI Assistant" calls the backend and falls back to local keyword routing if the API is unavailable:
 
 | Method | Endpoint | Purpose |
 |---|---|---|
-| POST | `/voice/chat` | `{ message: string }` → `{ reply: string, action?: { type: 'navigate', path: string } }`. Server-side LLM/NLU; client falls back to local keyword matching when unavailable. |
+| POST | `/voice/chat` | `{ message: string }` → `{ reply: string, action?: { type: 'navigate', path: string } }` |
 
-Component: `components/VoiceAssistant.jsx` — swap `respond()` to call this endpoint when connected.
+Component: `components/VoiceAssistant.jsx`
 
 ### Reports
 
-Reports are computed client-side from the endpoints above — no dedicated API needed initially. Optional: `GET /reports/summary` for a server-aggregated score.
+Reports are computed server-side: `GET /reports/summary` returns the aggregated score used by the Reports page.
 
-## Local storage keys (migration map)
+## Local storage
 
-| Key | Contents |
-|---|---|
-| `horemow-theme` | light / dark / system |
-| `horemow-display-name` | User display name |
-| `horemow-bible-progress` | Bible chapter statuses |
-| `horemow-book-progress` | Book reading positions |
-| `horemow-book-highlights` | Text highlights |
-| `horemow-messages-log` | Logged messages |
-| `horemow-souls` | Souls won |
-| `horemow-prayer-sessions` | Prayer sessions |
-| `horemow-admin-books` | Admin-added books |
-| `horemow-admin-bible-books` | Admin-added Bible books |
-| `horemow-benchmarks` | Message benchmarks |
-| `horemow-soul-targets` | Soul targets per event |
-| `horemow-prayer-targets` | Daily prayer minutes per event |
-| `horemow-app-settings` | Module visibility toggles |
-
-Settings page (`/settings`) can export/import all `horemow-*` keys as JSON — useful for migrating local data to the backend later.
+Only device preferences and the auth token are kept in `localStorage` (`horemow-theme`, `horemow-token`). All assignment data lives in MongoDB. The Settings page can export a JSON snapshot of the server data.
 
 ## Events / audiences
 

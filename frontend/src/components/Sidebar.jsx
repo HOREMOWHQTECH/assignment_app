@@ -15,7 +15,7 @@ const LINKS = [
 
 export default function Sidebar({ collapsed, onToggle }) {
   const { settings } = useAppSettings()
-  const links = LINKS.filter((l) => !l.module || settings.modules[l.module])
+  const links = LINKS.filter((l) => !l.module || settings.modules?.[l.module])
   return (
     <motion.aside
       className="side"

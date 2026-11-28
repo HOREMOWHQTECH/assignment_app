@@ -1,38 +1,39 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { api } from './client.js'
 
-const KEY = 'horemow-souls'
+const KEY = ['souls']
 
-function load() {
-  try {
-    const raw = window.localStorage.getItem(KEY)
-    return raw ? JSON.parse(raw) : []
-  } catch {
-    return []
-  }
-}
-
-// Shape: [{ id, name, phone, address, note, tag, events: [], date }]
 export function useSouls() {
-  const [souls, setSouls] = useState(load)
+  const queryClient = useQueryClient()
+  const query = useQuery({
+    queryKey: KEY,
+    queryFn: async () => (await api('/souls')).souls,
+  })
 
-  useEffect(() => {
-    window.localStorage.setItem(KEY, JSON.stringify(souls))
-  }, [souls])
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: KEY })
+    queryClient.invalidateQueries({ queryKey: ['reports', 'summary'] })
+  }
 
-  const add = useCallback((entry) => {
-    setSouls((prev) => [{ id: crypto.randomUUID(), date: new Date().toISOString(), ...entry }, ...prev])
-    // TODO: POST /api/souls
-  }, [])
+  const addMutation = useMutation({
+    mutationFn: (entry) => api('/souls', { method: 'POST', body: entry }),
+    onSuccess: invalidate,
+  })
+  const updateMutation = useMutation({
+    mutationFn: ({ id, patch }) => api(`/souls/${id}`, { method: 'PUT', body: patch }),
+    onSuccess: invalidate,
+  })
+  const removeMutation = useMutation({
+    mutationFn: (id) => api(`/souls/${id}`, { method: 'DELETE' }),
+    onSuccess: invalidate,
+  })
 
-  const remove = useCallback((id) => {
-    setSouls((prev) => prev.filter((s) => s.id !== id))
-    // TODO: DELETE /api/souls/:id
-  }, [])
-
-  const update = useCallback((id, patch) => {
-    setSouls((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)))
-    // TODO: PUT /api/souls/:id
-  }, [])
-
-  return { souls, add, remove, update }
+  return {
+    souls: query.data || [],
+    loading: query.isLoading,
+    error: query.error,
+    add: addMutation.mutateAsync,
+    update: (id, patch) => updateMutation.mutateAsync({ id, patch }),
+    remove: removeMutation.mutateAsync,
+  }
 }

@@ -7,7 +7,7 @@ import { useAppSettings } from '../api/settings.js'
 import { useAllBooks } from '../api/books.js'
 import { useBibleBooks } from '../api/bibleStudy.js'
 import { useMessages } from '../api/messages.js'
-import { savePdf, deletePdf } from '../api/pdfStore.js'
+import { errorMessage } from '../api/client.js'
 
 const AUDIENCE_LABEL = Object.fromEntries(AUDIENCES.map((a) => [a.key, a.label]))
 
@@ -41,10 +41,11 @@ export default function Admin() {
   const { targets: prayerTargets, setTarget: setPrayerTarget } = usePrayerTargets()
   const { settings, setModule } = useAppSettings()
 
-  const [bookForm, setBookForm] = useState({ title: '', author: '', audiences: ['general'], pdf: null })
+  const [bookForm, setBookForm] = useState({ title: '', author: '', audiences: ['general'], pdf: null, cover: null })
   const [bibleForm, setBibleForm] = useState({ name: '', chapters: 1 })
   const [msg, setMsg] = useState('')
   const pdfInputRef = useRef(null)
+  const coverInputRef = useRef(null)
 
   const toggleAudience = (key) => {
     setBookForm((f) => ({
@@ -56,24 +57,33 @@ export default function Admin() {
   const submitBook = async (e) => {
     e.preventDefault()
     if (!bookForm.title.trim() || !bookForm.author.trim() || !bookForm.audiences.length || !bookForm.pdf) return
-    const book = addBook({
-      title: bookForm.title.trim(),
-      author: bookForm.author.trim(),
-      audiences: bookForm.audiences,
-      pdf: true,
-    })
-    await savePdf(book.id, bookForm.pdf)
-    setBookForm({ title: '', author: '', audiences: ['general'], pdf: null })
-    if (pdfInputRef.current) pdfInputRef.current.value = ''
-    setMsg('Book added — it now appears in the library.')
+    try {
+      await addBook({
+        title: bookForm.title.trim(),
+        author: bookForm.author.trim(),
+        audiences: bookForm.audiences,
+        file: bookForm.pdf,
+        cover: bookForm.cover,
+      })
+      setBookForm({ title: '', author: '', audiences: ['general'], pdf: null, cover: null })
+      if (pdfInputRef.current) pdfInputRef.current.value = ''
+      if (coverInputRef.current) coverInputRef.current.value = ''
+      setMsg('Book added — it now appears in the library.')
+    } catch (err) {
+      setMsg(errorMessage(err))
+    }
   }
 
-  const submitBible = (e) => {
+  const submitBible = async (e) => {
     e.preventDefault()
     if (!bibleForm.name.trim()) return
-    addBibleBook(bibleForm.name.trim(), bibleForm.chapters)
-    setBibleForm({ name: '', chapters: 1 })
-    setMsg('Bible book added — it now appears in the tracker.')
+    try {
+      await addBibleBook(bibleForm.name.trim(), bibleForm.chapters)
+      setBibleForm({ name: '', chapters: 1 })
+      setMsg('Bible book added — it now appears in the tracker.')
+    } catch (err) {
+      setMsg(errorMessage(err))
+    }
   }
 
   return (
@@ -100,18 +110,18 @@ export default function Admin() {
                 <span>{m.label}</span>
                 <button
                   type="button"
-                  className={`book-tag pick ${settings.modules[m.key] ? 'on' : ''}`}
-                  style={{ cursor: 'pointer', opacity: settings.modules[m.key] ? 1 : 0.55 }}
-                  onClick={() => setModule(m.key, !settings.modules[m.key])}
+                  className={`book-tag pick ${settings.modules?.[m.key] ? 'on' : ''}`}
+                  style={{ cursor: 'pointer', opacity: settings.modules?.[m.key] ? 1 : 0.55 }}
+                  onClick={() => setModule(m.key, !settings.modules?.[m.key])}
                 >
-                  {settings.modules[m.key] ? 'Enabled' : 'Disabled'}
+                  {settings.modules?.[m.key] ? 'Enabled' : 'Disabled'}
                 </button>
               </div>
             ))}
           </div>
         </Section>
 
-        <Section title="Add a book (PDF)" sub="Upload a PDF title — it appears in the library and opens in the built-in PDF reader.">
+        <Section title="Add a book (PDF)" sub="Upload a PDF and an optional cover image — it appears in the library and opens in the built-in PDF reader.">
           <form className="msg-form" onSubmit={submitBook}>
             <input type="text" placeholder="Book title" value={bookForm.title} onChange={(e) => setBookForm((f) => ({ ...f, title: e.target.value }))} />
             <input type="text" placeholder="Author" value={bookForm.author} onChange={(e) => setBookForm((f) => ({ ...f, author: e.target.value }))} />
@@ -121,6 +131,14 @@ export default function Admin() {
               accept="application/pdf,.pdf"
               required
               onChange={(e) => setBookForm((f) => ({ ...f, pdf: e.target.files?.[0] || null }))}
+              style={{ fontSize: 13 }}
+            />
+            <input
+              ref={coverInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
+              onChange={(e) => setBookForm((f) => ({ ...f, cover: e.target.files?.[0] || null }))}
+              title="Optional cover image"
               style={{ fontSize: 13 }}
             />
             <button className="btn pri" type="submit" disabled={!bookForm.pdf}><Icon name="plus" /> Add book</button>
@@ -136,7 +154,7 @@ export default function Admin() {
               {customBooks.map((b) => (
                 <div key={b.id} className="admin-row">
                   <span><strong>{b.title}</strong> — {b.author} ({b.audiences.map((a) => AUDIENCE_LABEL[a]).join(', ')})</span>
-                  <button className="btn ghost sm" type="button" onClick={() => { removeBook(b.id); deletePdf(b.id) }}><Icon name="trash" /></button>
+                  <button className="btn ghost sm" type="button" onClick={() => removeBook(b.id)}><Icon name="trash" /></button>
                 </div>
               ))}
             </div>

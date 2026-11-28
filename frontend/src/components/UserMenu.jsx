@@ -2,11 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import Icon from './Icon.jsx'
+import { useAuth } from '../auth/AuthContext.jsx'
 
 export default function UserMenu() {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
   const navigate = useNavigate()
+  const { user, logout } = useAuth()
 
   useEffect(() => {
     if (!open) return
@@ -17,9 +19,9 @@ export default function UserMenu() {
     return () => document.removeEventListener('mousedown', onClick)
   }, [open])
 
-  const logout = () => {
+  const handleLogout = async () => {
     setOpen(false)
-    // TODO: clear auth token / call logout endpoint
+    await logout()
     navigate('/login')
   }
 
@@ -47,11 +49,13 @@ export default function UserMenu() {
             <Link className="um-item" to="/settings" onClick={() => setOpen(false)}>
               Settings
             </Link>
-            <Link className="um-item" to="/admin" onClick={() => setOpen(false)}>
-              <Icon name="shield" />
-              Admin
-            </Link>
-            <button className="um-item danger" type="button" onClick={logout}>
+            {user?.role === 'admin' && (
+              <Link className="um-item" to="/admin" onClick={() => setOpen(false)}>
+                <Icon name="shield" />
+                Admin
+              </Link>
+            )}
+            <button className="um-item danger" type="button" onClick={handleLogout}>
               <Icon name="logout" />
               Log out
             </button>

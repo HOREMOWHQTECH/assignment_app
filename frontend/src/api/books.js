@@ -1,85 +1,120 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { BOOKS } from '../data/books.js'
-import { useAdminBooks } from './admin.js'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { api, apiBlob } from './client.js'
 
-const PROGRESS_KEY = 'horemow-book-progress'
-const HIGHLIGHT_KEY = 'horemow-book-highlights'
-
-function load(key) {
-  try {
-    const raw = window.localStorage.getItem(key)
-    return raw ? JSON.parse(raw) : {}
-  } catch {
-    return {}
-  }
-}
-
-// Progress shape: { [bookId]: { chapter, page, completed, lastRead } }
-export function useBookProgress() {
-  const [progress, setProgress] = useState(() => load(PROGRESS_KEY))
-
-  useEffect(() => {
-    window.localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress))
-  }, [progress])
-
-  const update = useCallback((bookId, patch) => {
-    setProgress((prev) => ({
-      ...prev,
-      [bookId]: { ...(prev[bookId] || { chapter: 0, page: 0, completed: false }), ...patch, lastRead: Date.now() },
-    }))
-    // TODO: PATCH /api/books/:id/progress
-  }, [])
-
-  const markCompleted = useCallback((bookId, completed = true) => {
-    update(bookId, { completed })
-  }, [update])
-
-  return { progress, update, markCompleted }
-}
-
-// Highlights shape: { [bookId]: [{ chapter, page, quote }] }
-export function useHighlights(bookId) {
-  const [all, setAll] = useState(() => load(HIGHLIGHT_KEY))
-
-  useEffect(() => {
-    window.localStorage.setItem(HIGHLIGHT_KEY, JSON.stringify(all))
-  }, [all])
-
-  const list = all[bookId] || []
-
-  const add = useCallback((quote) => {
-    setAll((prev) => ({
-      ...prev,
-      [bookId]: [...(prev[bookId] || []), quote],
-    }))
-    // TODO: POST /api/books/:id/highlights
-  }, [bookId])
-
-  const remove = useCallback((index) => {
-    setAll((prev) => ({
-      ...prev,
-      [bookId]: (prev[bookId] || []).filter((_, i) => i !== index),
-    }))
-  }, [bookId])
-
-  return { highlights: list, add, remove }
-}
-
-// All books: built-in + admin-added
-export function useAllBooks() {
-  const { books: custom } = useAdminBooks()
-  return useMemo(() => [...BOOKS, ...custom], [custom])
-}
-
-export function bookStats(progress, books = BOOKS) {
-  let pagesRead = 0
+export function bookStats(progress, books = []) {
   let completed = 0
   for (const book of books) {
-    const p = progress[book.id]
-    if (p?.completed) completed += 1
-    if (!p) continue
-    for (let c = 0; c < p.chapter; c++) pagesRead += book.chapters[c].pages.length
-    pagesRead += Math.min(p.page + 1, book.chapters[p.chapter]?.pages.length || 0)
+    if (progress[book.id]?.completed) completed += 1
   }
-  return { pagesRead, completed }
+  return { completed }
+}
+
+const BOOKS_KEY = ['books', 'all']
+const PROGRESS_KEY = ['books', 'progress']
+
+export function useAllBooks() {
+  const query = useQuery({
+    queryKey: BOOKS_KEY,
+    queryFn: async () => (await api('/books')).books,
+  })
+  return query.data || []
+}
+
+// Covers are real images uploaded by an admin and served by the API. They need
+// the auth header, so they are fetched as blobs instead of used as plain URLs.
+export function useBookCovers(books) {
+  const [covers, setCovers] = useState({})
+  const urlsRef = useRef({})
+
+  useEffect(() => {
+    let active = true
+    for (const book of books) {
+      if (!book.coverUrl || urlsRef.current[book.id]) continue
+      apiBlob(book.coverUrl)
+        .then((blob) => {
+          if (!active) return
+          const url = URL.createObjectURL(blob)
+          urlsRef.current[book.id] = url
+          setCovers((current) => ({ ...current, [book.id]: url }))
+        })
+        .catch(() => {})
+    }
+    return () => { active = false }
+  }, [books])
+
+  useEffect(() => () => {
+    Object.values(urlsRef.current).forEach((url) => URL.revokeObjectURL(url))
+  }, [])
+
+  return covers
+}
+
+export function useBookProgress() {
+  const queryClient = useQueryClient()
+  const query = useQuery({
+    queryKey: PROGRESS_KEY,
+    queryFn: async () => (await api('/books/progress')).progress,
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: ({ bookId, patch }) => api(`/books/${bookId}/progress`, {
+      method: 'PATCH',
+      body: patch,
+    }),
+    onSuccess: (data, variables) => {
+      queryClient.setQueryData(PROGRESS_KEY, (old) => ({ ...old, [variables.bookId]: data }))
+      queryClient.invalidateQueries({ queryKey: ['reports', 'summary'] })
+    },
+  })
+  const completeMutation = useMutation({
+    mutationFn: ({ bookId, completed }) => api(`/books/${bookId}/complete`, {
+      method: 'POST',
+      body: { completed },
+    }),
+    onSuccess: (data, variables) => {
+      queryClient.setQueryData(PROGRESS_KEY, (old) => ({ ...old, [variables.bookId]: data }))
+      queryClient.invalidateQueries({ queryKey: ['reports', 'summary'] })
+    },
+  })
+
+  const update = useCallback((bookId, patch) => updateMutation.mutateAsync({ bookId, patch }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [updateMutation])
+  const markCompleted = useCallback((bookId, completed = true) => completeMutation.mutateAsync({ bookId, completed }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [completeMutation])
+
+  return {
+    progress: query.data || {},
+    loading: query.isLoading,
+    update,
+    markCompleted,
+  }
+}
+
+export function useHighlights(bookId) {
+  const queryClient = useQueryClient()
+  const queryKey = ['books', bookId, 'highlights']
+  const query = useQuery({
+    queryKey,
+    queryFn: async () => (await api(`/books/${bookId}/highlights`)).highlights,
+    enabled: Boolean(bookId),
+  })
+
+  const addMutation = useMutation({
+    mutationFn: (highlight) => api(`/books/${bookId}/highlights`, { method: 'POST', body: highlight }),
+    onSuccess: (data) => queryClient.setQueryData(queryKey, data.highlights),
+  })
+  const removeMutation = useMutation({
+    mutationFn: (index) => api(`/books/${bookId}/highlights/${index}`, { method: 'DELETE' }),
+    onSuccess: (data) => queryClient.setQueryData(queryKey, data.highlights),
+  })
+
+  return {
+    highlights: query.data || [],
+    loading: query.isLoading,
+    add: addMutation.mutateAsync,
+    remove: removeMutation.mutateAsync,
+  }
 }

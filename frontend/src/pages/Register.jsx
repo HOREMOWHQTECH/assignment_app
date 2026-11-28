@@ -4,6 +4,9 @@ import { motion } from 'framer-motion'
 import { AuthShell, GoogleButton } from '../components/AuthShell.jsx'
 import Icon from '../components/Icon.jsx'
 import { COUNTRIES, STATES } from '../data/locations.js'
+import { useAuth } from '../auth/AuthContext.jsx'
+import { requestGoogleCredential } from '../auth/google.js'
+import { errorMessage } from '../api/client.js'
 
 const ROLES = [
   { value: 'member', label: 'Member', icon: 'users' },
@@ -12,12 +15,9 @@ const ROLES = [
 
 export default function Register() {
   const navigate = useNavigate()
+  const { register, google } = useAuth()
   const [form, setForm] = useState({
-    name: '',
-    email: '',
-    country: '',
-    state: '',
-    role: 'member',
+    name: '', email: '', password: '', country: '', state: '', chapter: '', zone: '', role: 'member',
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -36,24 +36,41 @@ export default function Register() {
   const validate = () => {
     if (!form.name.trim()) return 'Please enter your full name.'
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return 'Please enter a valid email address.'
+    if (form.password.length < 6) return 'Password must be at least 6 characters.'
     if (!form.country) return 'Please select your country.'
     if (stateOptions.length && !form.state) return 'Please select your state.'
+    if (!form.chapter.trim()) return 'Please enter your chapter.'
+    if (!form.zone.trim()) return 'Please enter your zone.'
     return ''
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     const err = validate()
     if (err) return setError(err)
     setError('')
     setLoading(true)
-    // TODO: POST /api/auth/register with { name, email, country, state, role }
-    setTimeout(() => navigate('/'), 600)
+    try {
+      await register(form)
+      navigate('/')
+    } catch (err2) {
+      setError(errorMessage(err2))
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleGoogle = () => {
-    // TODO: trigger Google OAuth flow
-    navigate('/')
+  const handleGoogle = async () => {
+    setError('')
+    setLoading(true)
+    try {
+      await google(await requestGoogleCredential())
+      navigate('/')
+    } catch (err) {
+      setError(errorMessage(err))
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -66,7 +83,7 @@ export default function Register() {
         </p>
       }
     >
-      <GoogleButton onClick={handleGoogle} label="Sign up with Google" />
+      <GoogleButton onClick={handleGoogle} label="Sign up with Google" disabled={loading} />
       <div className="divider">or sign up with email</div>
 
       <form onSubmit={handleSubmit} noValidate>
@@ -99,6 +116,19 @@ export default function Register() {
         </div>
 
         <div className="field">
+          <label htmlFor="reg-password">Password <em>*</em></label>
+          <input
+            id="reg-password"
+            className="input"
+            type="password"
+            placeholder="At least 6 characters"
+            value={form.password}
+            onChange={update('password')}
+            autoComplete="new-password"
+          />
+        </div>
+
+        <div className="field">
           <label htmlFor="reg-country">Country <em>*</em></label>
           <select id="reg-country" value={form.country} onChange={update('country')}>
             <option value="">Select country</option>
@@ -109,10 +139,7 @@ export default function Register() {
         </div>
 
         <div className="field">
-          <label htmlFor="reg-state">
-            {stateOptions.length ? 'State / Region' : 'State / Region'}
-            {stateOptions.length > 0 && <em> *</em>}
-          </label>
+          <label htmlFor="reg-state">State / Region{stateOptions.length > 0 && <em> *</em>}</label>
           {stateOptions.length > 0 ? (
             <select id="reg-state" value={form.state} onChange={update('state')}>
               <option value="">Select state</option>
@@ -128,8 +155,33 @@ export default function Register() {
               placeholder="Enter your state or region"
               value={form.state}
               onChange={update('state')}
+              autoComplete="address-level1"
             />
           )}
+        </div>
+
+        <div className="field">
+          <label htmlFor="reg-chapter">Chapter <em>*</em></label>
+          <input
+            id="reg-chapter"
+            className="input"
+            type="text"
+            placeholder="e.g. Lagos Central Chapter"
+            value={form.chapter}
+            onChange={update('chapter')}
+          />
+        </div>
+
+        <div className="field">
+          <label htmlFor="reg-zone">Zone <em>*</em></label>
+          <input
+            id="reg-zone"
+            className="input"
+            type="text"
+            placeholder="e.g. Ikeja Zone"
+            value={form.zone}
+            onChange={update('zone')}
+          />
         </div>
 
         <div className="field">

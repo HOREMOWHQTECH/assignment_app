@@ -2,29 +2,47 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { AuthShell, GoogleButton } from '../components/AuthShell.jsx'
+import { useAuth } from '../auth/AuthContext.jsx'
+import { requestGoogleCredential } from '../auth/google.js'
+import { errorMessage } from '../api/client.js'
 
 export default function Login() {
   const navigate = useNavigate()
+  const { login, google } = useAuth()
   const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
   const update = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (!form.email || !form.password) {
       return setError('Please enter your email and password.')
     }
     setError('')
     setLoading(true)
-    // TODO: POST /api/auth/login with { email, password }
-    setTimeout(() => navigate('/'), 600)
+    try {
+      await login(form.email, form.password)
+      navigate('/')
+    } catch (err) {
+      setError(errorMessage(err))
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleGoogle = () => {
-    // TODO: trigger Google OAuth flow
-    navigate('/')
+  const handleGoogle = async () => {
+    setError('')
+    setLoading(true)
+    try {
+      await google(await requestGoogleCredential())
+      navigate('/')
+    } catch (err) {
+      setError(errorMessage(err))
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -37,7 +55,7 @@ export default function Login() {
         </p>
       }
     >
-      <GoogleButton onClick={handleGoogle} label="Sign in with Google" />
+      <GoogleButton onClick={handleGoogle} label="Sign in with Google" disabled={loading} />
       <div className="divider">or sign in with email</div>
 
       <form onSubmit={handleSubmit} noValidate>

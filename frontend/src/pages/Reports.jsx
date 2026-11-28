@@ -1,27 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import AppShell from '../components/AppShell.jsx'
 import Icon from '../components/Icon.jsx'
-import { AUDIENCES } from '../data/messages.js'
-import { useBibleProgress, useBibleBooks, bibleStats } from '../api/bibleStudy.js'
-import { useBookProgress, useAllBooks, bookStats } from '../api/books.js'
-import { useMessages } from '../api/messages.js'
-import { useBenchmarks, useSoulTargets, usePrayerTargets } from '../api/admin.js'
-import { useSouls } from '../api/souls.js'
-import { usePrayerSessions } from '../api/prayer.js'
-
-const LABEL = Object.fromEntries(AUDIENCES.map((a) => [a.key, a.label]))
-const DAYS = 365
-
-const pct = (part, total) => (total > 0 ? Math.min(100, Math.round((part / total) * 100)) : 0)
-
-function grade(p) {
-  if (p >= 90) return 'Excellent'
-  if (p >= 75) return 'Great'
-  if (p >= 50) return 'Good'
-  if (p >= 25) return 'Fair'
-  return 'Keep going'
-}
+import { useReportSummary } from '../api/reports.js'
 
 function buildReportHTML(data) {
   const rows = data.categories.map((c) => `
@@ -52,70 +33,15 @@ function buildReportHTML(data) {
 }
 
 export default function Reports() {
-  const { progress: bibleProgress } = useBibleProgress()
-  const bibleBooks = useBibleBooks()
-  const { progress: bookProgress } = useBookProgress()
-  const books = useAllBooks()
-  const { entries: messages } = useMessages()
-  const { benchmarks } = useBenchmarks()
-  const { souls } = useSouls()
-  const { targets: soulTargets } = useSoulTargets()
-  const { sessions } = usePrayerSessions()
-  const { targets: prayerTargets } = usePrayerTargets()
+  const { data, isLoading, error } = useReportSummary()
   const [copied, setCopied] = useState(false)
 
-  const data = useMemo(() => {
-    const bible = bibleStats(bibleProgress, bibleBooks)
-    const totalChapters = bibleBooks.reduce((n, b) => n + b.chapters, 0)
-    const biblePct = pct(bible.done, totalChapters)
-
-    const bs = bookStats(bookProgress, books)
-    const totalPages = books.reduce((n, b) => n + b.pageCount, 0)
-    const booksPct = pct(bs.pagesRead, totalPages)
-
-    let msgLogged = 0
-    let msgTarget = 0
-    const msgRows = AUDIENCES.map((a) => {
-      const logged = messages.filter((m) => (m.audiences || (m.audience ? [m.audience] : [])).includes(a.key)).length
-      const target = benchmarks[a.key] || 0
-      msgLogged += logged
-      msgTarget += target
-      return { label: a.label, logged, target, p: pct(logged, target) }
-    })
-    const messagesPct = pct(msgLogged, msgTarget)
-
-    let soulLogged = 0
-    let soulTarget = 0
-    const soulRows = AUDIENCES.map((a) => {
-      const logged = souls.filter((s) => (s.events || []).includes(a.key)).length
-      const target = soulTargets[a.key] || 0
-      soulLogged += logged
-      soulTarget += target
-      return { label: a.label, logged, target, p: pct(logged, target) }
-    })
-    const soulsPct = pct(soulLogged, soulTarget)
-
-    let prayLogged = 0
-    let prayTarget = 0
-    const prayRows = AUDIENCES.map((a) => {
-      const minutes = sessions.filter((s) => (s.events || []).includes(a.key)).reduce((n, s) => n + s.minutes, 0)
-      const target = (prayerTargets[a.key] || 0) * DAYS
-      prayLogged += minutes
-      prayTarget += target
-      return { label: a.label, logged: minutes, target, p: pct(minutes, target) }
-    })
-    const prayerPct = pct(prayLogged, prayTarget)
-
-    const categories = [
-      { name: 'Bible Study', detail: `${bible.done}/${totalChapters} chapters · ${bible.booksComplete}/${bibleBooks.length} books`, pct: biblePct },
-      { name: 'Books', detail: `${bs.pagesRead}/${totalPages} pages · ${bs.completed}/${books.length} completed`, pct: booksPct },
-      { name: 'Messages', detail: `${msgLogged}/${msgTarget} logged`, pct: messagesPct, rows: msgRows },
-      { name: 'Soul Winning', detail: `${soulLogged}/${soulTarget} souls`, pct: soulsPct, rows: soulRows },
-      { name: 'Prayer & Fasting', detail: `${Math.round(prayLogged / 60)}h / ${Math.round(prayTarget / 60)}h prayed`, pct: prayerPct, rows: prayRows },
-    ]
-    const overall = Math.round(categories.reduce((n, c) => n + c.pct, 0) / categories.length)
-    return { categories, overall, grade: grade(overall), date: new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) }
-  }, [bibleProgress, bibleBooks, bookProgress, books, messages, benchmarks, souls, soulTargets, sessions, prayerTargets])
+  if (isLoading || !data) {
+    return <AppShell><main style={{ padding: 40 }}><p className="sub">Loading report…</p></main></AppShell>
+  }
+  if (error) {
+    return <AppShell><main style={{ padding: 40 }}><p className="form-error">{error.message}</p></main></AppShell>
+  }
 
   const download = () => {
     const html = buildReportHTML(data)

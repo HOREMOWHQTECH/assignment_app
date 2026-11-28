@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Icon from './Icon.jsx'
 
@@ -23,27 +24,35 @@ export default function HeroCard({ user }) {
           <Icon name="shield" />
           {user.role}
         </span>
-        <span className="tag amb">
-          <Icon name="cal" />
-          {user.event}
-        </span>
+        {user.event && (
+          <span className="tag amb">
+            <Icon name="cal" />
+            {user.event}
+          </span>
+        )}
       </motion.div>
       <motion.h1 variants={item}>Welcome back, {user.name}</motion.h1>
       <motion.p variants={item}>{user.mandate}</motion.p>
       <motion.div className="meta" variants={item}>
-        <span>
-          Country: <b>{user.country}</b>
-        </span>
-        <span>
-          Chapter: <b>{user.chapter}</b>
-        </span>
-        <span>
-          Branch: <b>{user.branch}</b>
-        </span>
-        <a className="btn out" href="#">
+        {user.country && (
+          <span>
+            Country: <b>{user.country}</b>
+          </span>
+        )}
+        {user.chapter && (
+          <span>
+            Chapter: <b>{user.chapter}</b>
+          </span>
+        )}
+        {user.zone && (
+          <span>
+            Zone: <b>{user.zone}</b>
+          </span>
+        )}
+        <Link className="btn out" to="/reports">
           Full Verification Report
           <Icon name="arrow" />
-        </a>
+        </Link>
       </motion.div>
     </motion.section>
   )

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import Icon from './Icon.jsx'
+import { api } from '../api/client.js'
 
 const ROUTES = [
   { keys: ['bible'], path: '/bible-study', label: 'Bible Study' },
@@ -48,7 +49,7 @@ export default function VoiceAssistant() {
 
   useEffect(() => () => window.speechSynthesis?.cancel(), [])
 
-  const respond = (text) => {
+  const respondLocal = (text) => {
     const t = text.toLowerCase()
     const route = ROUTES.find((r) => r.keys.some((k) => t.includes(k)))
     if (route) {
@@ -62,6 +63,17 @@ export default function VoiceAssistant() {
     const msg = answer ? answer.reply : `I didn't catch that. Try "go to books" or "help".`
     setReply(msg)
     speak(msg)
+  }
+
+  const respond = async (text) => {
+    try {
+      const data = await api('/voice/chat', { method: 'POST', body: { message: text } })
+      if (data.action?.type === 'navigate') navigate(data.action.path)
+      setReply(data.reply)
+      speak(data.reply)
+    } catch {
+      respondLocal(text)
+    }
   }
 
   const startListening = () => {

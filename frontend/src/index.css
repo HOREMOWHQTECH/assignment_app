@@ -261,6 +261,9 @@ h1 { margin: 6px 0 0; font-size: clamp(28px, 3.4vw, 40px); line-height: 1.12; le
 .book-cover { position: relative; display: block; min-height: 190px; overflow: hidden; }
 .book-cover img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .3s; }
 .book-card:hover .book-cover img { transform: scale(1.04); }
+.book-cover-text { min-height: 190px; padding: 28px 22px; display: flex; flex-direction: column; justify-content: space-between; background: linear-gradient(140deg, var(--accent), #0b4d3c); color: #fff; }
+.book-cover-text strong { font-family: Georgia, serif; font-size: 20px; line-height: 1.25; }
+.book-cover-text span { font-size: 12px; opacity: .85; }
 .book-done-tag { position: absolute; top: 12px; right: 12px; display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 10px; border-radius: 999px; background: rgba(255,255,255,.2); backdrop-filter: blur(4px); font-size: 11.5px; font-weight: 800; }
 .book-done-tag .i { width: 13px; height: 13px; }
 .book-info { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
@@ -364,6 +367,7 @@ h1 { margin: 6px 0 0; font-size: clamp(28px, 3.4vw, 40px); line-height: 1.12; le
 .admin-section { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 22px; margin-bottom: 18px; }
 .admin-section h2 { margin: 0 0 4px; font-size: 17px; }
 .admin-section .sub { margin: 0 0 16px; }
+.profile-form { max-width: 560px; }
 .admin-list { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
 .admin-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; font-size: 13.5px; }
 .bench-input { width: 76px; height: 34px; padding: 0 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--text); font: 800 14px Manrope, system-ui, sans-serif; text-align: center; outline: none; }

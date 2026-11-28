@@ -3,11 +3,10 @@ import Icon from './Icon.jsx'
 import UserMenu from './UserMenu.jsx'
 import { useTheme } from '../theme/ThemeContext.jsx'
 
-const EVENTS = ['Annual Cycle', 'Women', 'Ministers', 'Youth', 'December (General)']
-const AUDIENCES = ['Ministers', 'State', 'Men', 'Women', 'Youth', 'General']
-
-export default function TopBar() {
+export default function TopBar({ filters, event, audience, streak, onEvent, onAudience }) {
   const { toggleTheme } = useTheme()
+  const events = filters?.events || []
+  const audiences = filters?.audiences || []
 
   return (
     <motion.div
@@ -18,23 +17,23 @@ export default function TopBar() {
     >
       <label className="sel">
         Event
-        <select defaultValue="December (General)">
-          {EVENTS.map((e) => (
-            <option key={e}>{e}</option>
+        <select value={event} onChange={(e) => onEvent?.(e.target.value)}>
+          {events.map((option) => (
+            <option key={option.value} value={option.value}>{option.label}</option>
           ))}
         </select>
       </label>
       <label className="sel" aria-label="Audience">
-        <select defaultValue="General">
-          {AUDIENCES.map((a) => (
-            <option key={a}>{a}</option>
+        <select value={audience} onChange={(e) => onAudience?.(e.target.value)}>
+          {audiences.map((option) => (
+            <option key={option.value} value={option.value}>{option.label}</option>
           ))}
         </select>
       </label>
       <div className="right">
         <span className="chip">
           <Icon name="flame" />
-          7d Streak
+          {streak}d Streak
         </span>
         <motion.button
           className="icon-btn"

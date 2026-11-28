@@ -12,9 +12,13 @@ const TILES = [
 export default function QuickLog({ onLog }) {
   const [toast, setToast] = useState(null)
 
-  const handleLog = (tile) => {
-    onLog?.(tile.action)
-    setToast(`Logged: ${tile.label}`)
+  const handleLog = async (tile) => {
+    try {
+      await onLog?.(tile.action)
+      setToast(`Logged: ${tile.label}`)
+    } catch {
+      setToast('Could not log — please try again.')
+    }
   }
 
   return (
